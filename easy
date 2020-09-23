@@ -1,0 +1,7 @@
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+alias c='clear'
+alias src='source ~/.zshrc'
+alias n='nano'
+alias t='tmux attach -t0'
+alias t1='tmux attach -t1'
+alias h='htop'
