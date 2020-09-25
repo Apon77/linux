@@ -8,4 +8,4 @@ curl https://raw.githubusercontent.com/Apon77/linux/junk/easy >> ~/.zshrc
 #nano ~/.zshrc
 #ZSH_THEME="powerlevel10k/powerlevel10k"
 #p10k configure
-source ~/.zshrc
+#source ~/.zshrc
