@@ -1,0 +1,2 @@
+sudo adduser k
+sudo usermod -aG sudo k
