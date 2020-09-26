@@ -1,13 +1,17 @@
-sudo swapon --show
+#Edit these 3 lines according to your need
 swap_file=/mnt/swapfile
 swap_file_size=8G
+swappiness=10
 
+
+#No need to touch below lines
+sudo swapon --show
 sudo fallocate -l $swap_file_size $swap_file
 sudo chmod 600 $swap_file
 sudo mkswap $swap_file
 sudo swapon $swap_file
 sudo nano /etc/fstab
-#/swapfile swap swap defaults 0 0
+#$swap_file swap swap defaults 0 0
 sudo swapon --show
 sudo nano /etc/sysctl.conf
-#vm.swappiness=10        #swapiness is good for server
+#vm.swappiness=$swappiness        #swapiness 10 is good for server
