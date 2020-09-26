@@ -3,7 +3,6 @@ swap_file=/mnt/swapfile
 swap_file_size=8G
 
 
-#No need to touch below lines
 sudo swapon --show
 sudo fallocate -l $swap_file_size $swap_file
 sudo chmod 600 $swap_file
