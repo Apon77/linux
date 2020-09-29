@@ -1,4 +1,25 @@
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+#Usage, gpick https://github.com/Apon77/linux/commit/98f40ee2035c73093bba1dca0080fa178ed0dc36
+#Or, gcp https://github.com/Apon77/linux/commit/98f40ee2035c73093bba1dca0080fa178ed0dc36
+gpick (){
+
+if [[ $1 == *"http"* ]]
+then
+    repo_url=$(echo $1 | cut -f -5 -d "/")
+    commit_hash=$(echo $1 | cut -f 7 -d "/")
+    git remote add temp_remote $repo_url
+    git fetch temp_remote
+    git cherry-pick $commit_hash
+    git remote rm temp_remote
+else
+    git cherry-pick $1
+fi
+
+}
+
+alias gcp='gpick'
+alias gpc='gpick'
 alias c='clear'
 alias src='source ~/.zshrc'
 alias n='nano'
