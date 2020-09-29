@@ -5,7 +5,7 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/cu
 git clone --depth=1 https://github.com/zsh-users/zsh-history-substring-search ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search
 
 #zsh-syntax-highlighting must be the last plugin sourced.
-sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions history-substring-search zsh-syntax-highlighting)/g' ~/.zshrc
+sed -i 's/plugins=(git)/plugins=(git z zsh-autosuggestions history-substring-search zsh-syntax-highlighting)/g' ~/.zshrc
 sed -i 's/robbyrussell/powerlevel10k\/powerlevel10k/g' ~/.zshrc
 curl https://raw.githubusercontent.com/Apon77/linux/junk/easy >> ~/.zshrc
 #nano ~/.zshrc
