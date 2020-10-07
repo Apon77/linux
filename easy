@@ -29,4 +29,5 @@ alias h='htop'
 alias cc='ccache -s'
 alias p='ping 8.8.8.8'
 alias s='source'
+alias e='exit'
 alias myip="curl http://ipecho.net/plain; echo"
