@@ -1,9 +1,9 @@
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
+#git cherry-pick
 #Usage, gpick https://github.com/Apon77/linux/commit/98f40ee2035c73093bba1dca0080fa178ed0dc36
 #Or, gcp https://github.com/Apon77/linux/commit/98f40ee2035c73093bba1dca0080fa178ed0dc36
 gpick (){
-
 if [[ $1 == *"http"* ]]
 then
     repo_url=$(echo $1 | cut -f -5 -d "/")
@@ -15,9 +15,19 @@ then
 else
     git cherry-pick $1
 fi
-
 }
 
+#deldog
+deldog() {
+    RESULT=$(curl -sf --data-binary @"${1:--}" https://del.dog/documents) || {
+        echo "ERROR: failed to post document" >&2
+        return 1
+    }
+    KEY=$(printf  "%s\n" "${RESULT}" | cut -d '"' -f6)
+    echo "https://del.dog/${KEY}"
+}
+
+#alias
 alias gcp='gpick'
 alias gpc='gpick'
 alias c='clear'
