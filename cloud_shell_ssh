@@ -1,0 +1,12 @@
+wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-386.zip
+unzip ngrok*
+./ngrok authtoken 7t4txr7tq2s3PbEN5ugph_37sFyAmrx1vXLrzH27s6x
+sudo apt-get install ssh
+sudo nano /etc/ssh/sshd_config
+PasswordAuthentication yes
+#PublickeyAuthentication yes
+sudo /etc/init.d/ssh restart
+sudo adduser k
+sudo usermod -aG sudo k
+./ngrok tcp 22
+#ssh k@0.tcp.ngrok.io -p 19745
