@@ -27,6 +27,8 @@ deldog() {
     echo "https://del.dog/${KEY}"
 }
 
+git config --global credential.helper 'cache --timeout=36000' #10 hours cache
+
 #alias
 alias gcp='gpick'
 alias gpc='gpick'
