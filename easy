@@ -38,6 +38,8 @@ if [[ $(uname -a) == *"Android"* ]]; then
 [ ! -d ~/storage ] && termux-setup-storage
 fi
 
+export TZ='Asia/Dhaka'
+
 #alias
 alias gcp='gpick'
 alias gpc='gpick'
