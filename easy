@@ -27,6 +27,8 @@ deldog() {
     echo "https://del.dog/${KEY}"
 }
 
+git config --global user.name "Apon77"
+git config --global user.email "khalakuzzamanapon5@gmail.com"
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 
 #alias
