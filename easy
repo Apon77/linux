@@ -3,7 +3,7 @@ ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 #git cherry-pick
 #Usage, gpick https://github.com/Apon77/linux/commit/98f40ee2035c73093bba1dca0080fa178ed0dc36
 #Or, gcp https://github.com/Apon77/linux/commit/98f40ee2035c73093bba1dca0080fa178ed0dc36
-gpick (){
+gpick() {
 if [[ $1 == *"http"* ]]
 then
     repo_url=$(echo $1 | cut -f -5 -d "/")
@@ -25,6 +25,16 @@ deldog() {
     }
     KEY=$(printf  "%s\n" "${RESULT}" | cut -d '"' -f6)
     echo "https://del.dog/${KEY}"
+}
+
+# ping
+p() {
+if [[ $1 == *"."* ]]
+then
+    ping $1
+else
+    ping 8.8.8.8
+fi
 }
 
 #github/git config
@@ -52,7 +62,6 @@ alias t1='tmux attach -t1'
 alias tl='tmux ls'
 alias h='htop'
 alias cc='ccache -s'
-alias p='ping 8.8.8.8'
 alias s='source'
 alias e='exit'
 alias ee='echo'
