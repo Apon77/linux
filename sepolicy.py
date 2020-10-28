@@ -1,12 +1,11 @@
 #!/bin/python3
 # Usages: ./sepolicy.py log_filename
 
-import sys
+from sys import argv
 
-file=open(sys.argv[1], "r")
-logs=file.readlines()
-
+logs=open(argv[1], "r").readlines()
 avc_list = []
+
 for lines in logs:
     if 'avc:' in lines:
         if 'denied' in lines:
