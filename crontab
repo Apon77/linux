@@ -1,0 +1,4 @@
+crontab -e
+
+#Then add this line to run after reboot, better do it as root i guess.
+@reboot python /home/pi/Pimoroni/blinkt/examples/rainbow.py &
