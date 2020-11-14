@@ -11,7 +11,7 @@ curl https://raw.githubusercontent.com/Apon77/linux/junk/.p10k.zsh > ~/.p10k.zsh
 sed -i 's/plugins=(git)/plugins=(git z zsh-autosuggestions history-substring-search zsh-syntax-highlighting extract)/g' ~/.zshrc
 sed -i 's/robbyrussell/powerlevel10k\/powerlevel10k/g' ~/.zshrc
 
-curl https://raw.githubusercontent.com/Apon77/linux/junk/easy > ~/.oh-my-zsh/custom/easy.zsh
+curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh
 #nano ~/.zshrc
 #ZSH_THEME="powerlevel10k/powerlevel10k"
 #p10k configure
