@@ -38,17 +38,12 @@ fi
 }
 
 #github/git config
-git config --global user.name "Apon77"
-git config --global user.email "khalakuzzamanapon5@gmail.com"
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
-git config --global core.editor vim 
 
 #termux
 if [[ $(uname -a) == *"Android"* ]]; then
 [ ! -d ~/storage ] && termux-setup-storage
 fi
-
-export TZ='Asia/Dhaka'
 
 #alias
 alias gcp='gpick'
@@ -68,6 +63,5 @@ alias e='exit'
 alias ee='echo'
 alias path='echo -e ${PATH//:/\\n}'
 alias myip="curl http://ipecho.net/plain; echo"
-alias gdup='gdrive upload -p 1DuHbMh4ogKDGbjSNP-7xLPY3S1KW1Z1i'
 alias easy="curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh; source ~/.zshrc"
 alias rs='repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j'
