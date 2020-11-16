@@ -63,6 +63,7 @@ alias q='exit'
 alias e='echo'
 alias path='echo -e ${PATH//:/\\n}'
 alias myip="curl http://ipecho.net/plain; echo"
+alias st='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python -'
 alias easy="curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh; source ~/.zshrc"
 alias rs='repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j'
 alias apon="curl https://raw.githubusercontent.com/Apon77/linux/junk/personal_variables.zsh > ~/.oh-my-zsh/custom/personal_variables.zsh; source ~/.zshrc"
