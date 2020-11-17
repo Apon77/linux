@@ -8,6 +8,10 @@ if [[ $1 == *"http"* ]]
 then
     repo_url=$(echo $1 | cut -f -5 -d "/")
     commit_hash=$(echo $1 | cut -f 7 -d "/")
+    if [[ $1 == *"diff"* ]]
+    then
+	    commit_hash=$(echo $1 | cut -f 7 -d '/' | cut -f 1 -d '#')
+    fi
     git remote add temp_remote $repo_url
     git fetch temp_remote
     git cherry-pick $commit_hash
