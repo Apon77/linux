@@ -8,7 +8,7 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/cu
 curl https://raw.githubusercontent.com/Apon77/linux/junk/.p10k.zsh > ~/.p10k.zsh
 
 #zsh-syntax-highlighting must be the last plugin sourced.
-sed -i 's/plugins=(git)/plugins=(git z extract zsh-autosuggestions history-substring-search zsh-syntax-highlighting)/g' ~/.zshrc
+sed -i 's/plugins=(git)/plugins=(git z command-not-found extract zsh-autosuggestions history-substring-search zsh-syntax-highlighting)/g' ~/.zshrc
 sed -i 's/robbyrussell/powerlevel10k\/powerlevel10k/g' ~/.zshrc
 
 curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh
