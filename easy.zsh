@@ -62,6 +62,7 @@ alias s='source'
 alias q='exit'
 alias e='echo'
 alias du='du -h'
+alias dus='du -sh'
 alias df='df -h'
 alias path='echo -e ${PATH//:/\\n}'
 alias myip="curl http://ipecho.net/plain; echo"
