@@ -1,2 +1,4 @@
-sudo adduser k
-sudo usermod -aG sudo k
+username=k	#don't use capital letter/space
+password=apon
+
+sudo useradd -m $username && echo -en "$password\n$password" | passwd $username &&sudo usermod -aG sudo $username
