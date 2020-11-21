@@ -1,0 +1,6 @@
+# Add here /etc/ssh/ssh_config...
+# Auto add to known hosts
+
+Host 192.168.0.*	# * for all host
+   StrictHostKeyChecking=no
+   UserKnownHostsFile=/dev/null
