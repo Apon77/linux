@@ -4,3 +4,5 @@
 Host 192.168.0.*	# * for all host
    StrictHostKeyChecking=no
    UserKnownHostsFile=/dev/null
+
+# Or, ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no peter@192.168.0.100
