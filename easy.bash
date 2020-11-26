@@ -104,6 +104,7 @@ if [[ $(uname -a) == *"Android"* ]]; then
 fi
 
 #alias
+alias c=clear
 alias gcp='gpick'
 alias gpc='gpick'
 alias n='nano'
