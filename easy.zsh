@@ -41,6 +41,10 @@ else
 fi
 }
 
+function gcla() {
+	    git clone --recurse-submodules https://github.com/Apon77/$1
+    }
+
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 
