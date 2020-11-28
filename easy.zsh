@@ -45,14 +45,14 @@ function gcla() {
 	git clone --recurse-submodules https://github.com/Apon77/$1
 }
 
-#upload limit 500MB and 24H
+#upload limit 500MB and 24 Hours
 function up() {
 	curl --upload-file $1 https://free.keep.sh
 }
 
-#upload server2
+#upload limit 25GB, 3 Days and 1 time download
 function up2() {
-	curl https://bashupload.com/$1 --data-binary @$1
+	curl https://bashupload.com/$(basename $1) --data-binary @$1
 }
 
 
