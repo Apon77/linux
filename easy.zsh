@@ -42,9 +42,13 @@ fi
 }
 
 function gcla() {
-	    git clone --recurse-submodules https://github.com/Apon77/$1
-    }
+	git clone --recurse-submodules https://github.com/Apon77/$1
+}
 
+#upload limit 500MB and 24H
+function up() {
+	curl --upload-file $1 https://free.keep.sh
+}
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 
