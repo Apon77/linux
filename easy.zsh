@@ -49,6 +49,13 @@ function gcla() {
 function up() {
 	curl --upload-file $1 https://free.keep.sh
 }
+
+#upload server2
+function up2() {
+	curl https://bashupload.com/$1 --data-binary @$1
+}
+
+
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 
