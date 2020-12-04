@@ -55,7 +55,9 @@ function up2() {
 	curl https://bashupload.com/$(basename $1) --data-binary @$1
 }
 
-
+function up3() {
+	curl -F file=@$1 https://api.anonymousfiles.io/
+}
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 
