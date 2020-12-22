@@ -61,6 +61,16 @@ function up3() {
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 
+#speed test
+function st() {
+	if [ -z "$1" ];then
+		wget -O /dev/null --progress=dot:mega http://cachefly.cachefly.net/5mb.test ; date
+	else	
+		wget -O /dev/null --progress=dot:mega http://cachefly.cachefly.net/${1}mb.test ; date
+	fi
+}
+
+
 #termux
 if [[ $(uname -a) == *"Android"* ]]; then
 [ ! -d ~/storage ] && termux-setup-storage
@@ -89,7 +99,7 @@ alias df='df -h'
 alias rmrf='rm -rf'
 alias path='echo -e ${PATH//:/\\n}'
 alias myip="curl http://ipecho.net/plain; echo"
-alias st='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python -'
+alias st2='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python -'
 alias easy="curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh; source ~/.zshrc"
 alias rs='repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j'
 alias apon="curl https://raw.githubusercontent.com/Apon77/linux/junk/personal_variables.zsh > ~/.oh-my-zsh/custom/personal_variables.zsh; source ~/.zshrc"
