@@ -2,5 +2,6 @@ crontab -e
 
 #Then add this line to run after reboot, better do it as root i guess.
 @reboot python /home/pi/Pimoroni/blinkt/examples/rainbow.py &
-
-* * * * * cp -ru /dev/shm/ /home/k/                  @reboot cp -ru /home/k/shm/* /dev/shm/ &
+@reboot /bin/bash -c 'echo hi'
+* * * * * cp -ru /dev/shm/ /home/k/
+@reboot cp -ru /home/k/shm/* /dev/shm/ &
