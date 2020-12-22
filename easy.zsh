@@ -96,6 +96,7 @@ alias e='echo'
 alias du='du -h'
 alias dus='du -sh'
 alias df='df -h'
+alias wh='which'
 alias rmrf='rm -rf'
 alias path='echo -e ${PATH//:/\\n}'
 alias myip="curl http://ipecho.net/plain; echo"
