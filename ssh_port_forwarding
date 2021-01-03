@@ -14,6 +14,10 @@ ssh k@52.188.155.109 -L 9090:localhost:8080
 # now, jenkins can be accessed by localhost:9090
 
 # rule
-ssh -L unused_local_port:localhost:remote_service_port username@remote_ip
+ssh -L unused_local_port:anyip_that_remote_ip_has_access(localhost):remote_service_port username@remote_ip
 #or,
-ssh -L unused_local_port:localhost:remote_service_port username@remote_ip -p ssh_port
+ssh -L unused_local_port:anyip_that_remote_ip_has_access(localhost):remote_service_port username@remote_ip -p ssh_port
+#or,
+ssh -L local_port:192.168.1.5:port_on_192.168.1.5 username@192.168.1.2(ssh_server_ip)
+#or,
+ssh -L 3336:one_server_ip_known_to_ssh_server:3306(one_server's running service port) 3337:another_server_ip_known_to_ssh_server:3306(another_server's running service port) user@ssh_server
