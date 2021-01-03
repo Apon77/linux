@@ -1,0 +1,19 @@
+# 52.188.155.109 is allowing only port 22 from internet
+# 52.188.155.109 has jenkins running on port 8080
+
+ssh -L 8080:localhost:8080 k@52.188.155.109
+#or,
+ssh k@52.188.155.109 -L 8080:localhost:8080 
+# now, jenkins can be accessed by localhost:8080
+
+# or,
+
+ssh -L 9090:localhost:8080 k@52.188.155.109
+#or,
+ssh k@52.188.155.109 -L 9090:localhost:8080 
+# now, jenkins can be accessed by localhost:9090
+
+# rule
+ssh -L unused_local_port:localhost:remote_service_port username@remote_ip
+#or,
+ssh -L unused_local_port:localhost:remote_service_port username@remote_ip -p ssh_port
