@@ -106,3 +106,4 @@ alias rs='repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --f
 alias apon="curl https://raw.githubusercontent.com/Apon77/linux/junk/personal_variables.zsh > ~/.oh-my-zsh/custom/personal_variables.zsh; source ~/.zshrc"
 alias f='free -h'
 alias sshn='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+alias gssh='gcloud cloud-shell ssh'
