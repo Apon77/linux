@@ -1,0 +1,20 @@
+ssh-keygen -t rsa -C "khalakuzzamanapon5@gmail.com"	# Generate keygen
+cat ~/.ssh/id_rsa.pub	# Copy keygen
+ssh -p 29418 Apon77@gerrit.aospextended.com	# Username is case sensitive
+git clone https://github.com/Apon77/platform_frameworks_opt_telephony
+cd platform_frameworks_opt_telephony/
+gitdir=$(git rev-parse --git-dir); scp -p -P 29418 Apon77@gerrit.aospextended.com:hooks/commit-msg ${gitdir}/hooks/
+gcl https://github.com/AospExtended/platform_frameworks_opt_telephony aex
+cd aex
+gf ../platform_frameworks_opt_telephony
+gitdir=$(git rev-parse --git-dir); scp -p -P 29418 Apon77@gerrit.aospextended.com:hooks/commit-msg ${gitdir}/hooks/
+gcp de9a865c3^..dfde0a06d
+git push ssh://Apon77@gerrit.aospextended.com:29418/AospExtended/platform_frameworks_opt_telephony HEAD:refs/for/11.x
+cd /tmp
+gcl https://github.com/AospExtended/platform_frameworks_base
+git clone "ssh://Apon77@gerrit.aospextended.com:29418/AospExtended/platform_frameworks_base" && scp -p -P 29418 Apon77@gerrit.aospextended.com:hooks/commit-msg "platform_frameworks_base/.git/hooks/"
+cd platform_frameworks_base
+gco 11.x
+gf https://github.com/Apon77/platform_frameworks_base-2/
+gcp ff73ae608d34d766fb8231528e96c168d4341eff
+git push ssh://Apon77@gerrit.aospextended.com:29418/AospExtended/platform_frameworks_base HEAD:refs/for/11.x -o topic="fix ril telephony-ext"
