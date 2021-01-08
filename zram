@@ -16,5 +16,4 @@ swapon --priority 100 /dev/zram0
 
 # To disable it again, either reboot or run
 sudo su
-swapoff /dev/zram0
-rmmod zram
+swapoff /dev/zram0 && rmmod zram
