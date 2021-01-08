@@ -1,6 +1,8 @@
 sudo su
 # Size of zram to be used
 zram_size=1G    
+# Or,
+zram_size=1024M
 
 # Turn on zram (One line command, No need to touch)
 modprobe zram && echo lz4 > /sys/block/zram0/comp_algorithm && echo $zram_size > /sys/block/zram0/disksize && mkswap --label zram0 /dev/zram0 && swapon --priority 100 /dev/zram0
