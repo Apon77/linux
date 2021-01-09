@@ -73,3 +73,6 @@ fi
 
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
+
+export PATH=$PATH:$HOME/.diff-so-fancy
+git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
