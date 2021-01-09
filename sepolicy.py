@@ -1,6 +1,6 @@
 #!/bin/python3
 # Usages: ./sepolicy.py log_filename
-
+# Better use audit2allow in ubuntu docker or google cloud shell
 from sys import argv
 
 logs=open(argv[1], "r").readlines()
