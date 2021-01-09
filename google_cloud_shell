@@ -1,6 +1,10 @@
 # VNC
 # First setup zerotier and connect two devices
-docker run -d --hostname lubuntu --name lubuntu --restart always -p 5901:5901 -e TZ=Asia/Jakarta vncserver/lubuntu
+docker run -d -p 5901:5901 -p 6901:6901 soff/tiny-remote-desktop
+
+# Or,
+docker run -d --hostname lubuntu --name lubuntu --restart always -p 5901:5901 -e TZ=Asia/Dhaka vncserver/lubuntu
+
 # Then in client device vnc addr. zerotier_ip_of_server:5901
 
 # SSH
