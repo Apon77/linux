@@ -39,28 +39,26 @@ else
 fi
 }
 
-function gcla() {
+gcla() {
 	git clone --recurse-submodules https://github.com/Apon77/$1
 }
 
 #upload limit 500MB and 24 Hours
-function up() {
+up() {
 	curl --upload-file $1 https://free.keep.sh
 }
 
 #upload limit 25GB, 3 Days and 1 time download
-function up2() {
+up2() {
 	curl https://bashupload.com/$(basename $1) --data-binary @$1
 }
 
-function up3() {
+up3() {
 	curl -F file=@$1 https://api.anonymousfiles.io/
 }
-#github/git config
-git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 
 #speed test
-function st() {
+st() {
 	if [ -z "$1" ];then
 		wget -O /dev/null --progress=dot:mega http://cachefly.cachefly.net/5mb.test ; date
 	else	
@@ -68,9 +66,10 @@ function st() {
 	fi
 }
 
-
 #termux
 if [[ $(uname -a) == *"Android"* ]]; then
 [ ! -d ~/storage ] && termux-setup-storage
 fi
 
+#github/git config
+git config --global credential.helper 'cache --timeout=36000' #10 hours cache
