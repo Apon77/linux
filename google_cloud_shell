@@ -1,3 +1,9 @@
+# VNC
+# First setup zerotier and connect two devices
+docker run -d --hostname lubuntu --name lubuntu --restart always -p 5901:5901 -e TZ=Asia/Jakarta vncserver/lubuntu
+# Then in client device vnc addr. zerotier_ip_of_server:5901
+
+# SSH
 wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-386.zip
 unzip ngrok*
 ./ngrok authtoken 7t4txr7tq2s3PbEN5ugph_37sFyAmrx1vXLrzH27s6x
