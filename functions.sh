@@ -57,6 +57,10 @@ up3() {
 	curl -F file=@$1 https://api.anonymousfiles.io/
 }
 
+# 14 days, 10 GB
+up4() {
+	curl --upload-file $1 https://transfer.sh/$(basename $1); echo
+}
 #speed test
 st() {
 	if [ -z "$1" ];then
