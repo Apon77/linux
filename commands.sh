@@ -4,14 +4,15 @@ git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.
 git clone --depth=1 https://github.com/zsh-users/zsh-history-substring-search ~/.oh-my-zsh/custom/plugins/zsh-history-substring-search
 
 #Adding p10k theme
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
-curl https://raw.githubusercontent.com/Apon77/linux/junk/.p10k.zsh > ~/.p10k.zsh
+#git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+#curl https://raw.githubusercontent.com/Apon77/linux/junk/.p10k.zsh > ~/.p10k.zsh
 
 #zsh-syntax-highlighting must be the last plugin sourced.
 sed -i 's/plugins=(git)/plugins=(git z command-not-found extract zsh-autosuggestions history-substring-search zsh-syntax-highlighting)/g' ~/.zshrc
 #sed -i 's/robbyrussell/powerlevel10k\/powerlevel10k/g' ~/.zshrc
 
 curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh
+curl https://raw.githubusercontent.com/Apon77/linux/junk/common.sh > ~/.oh-my-zsh/custom/common.zsh
 #nano ~/.zshrc
 #ZSH_THEME="powerlevel10k/powerlevel10k"
 #p10k configure
