@@ -12,7 +12,8 @@ sed -i 's/plugins=(git)/plugins=(git z command-not-found extract zsh-autosuggest
 #sed -i 's/robbyrussell/powerlevel10k\/powerlevel10k/g' ~/.zshrc
 
 curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh
-curl https://raw.githubusercontent.com/Apon77/linux/junk/common.sh > ~/.oh-my-zsh/custom/common.zsh
+curl https://raw.githubusercontent.com/Apon77/linux/junk/functions.sh > ~/.oh-my-zsh/custom/functions.zsh
+curl https://raw.githubusercontent.com/Apon77/linux/junk/aliases.sh > ~/.oh-my-zsh/custom/aliases.zsh
 #nano ~/.zshrc
 #ZSH_THEME="powerlevel10k/powerlevel10k"
 #p10k configure
