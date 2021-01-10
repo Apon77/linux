@@ -1,4 +1,5 @@
 # VNC
+# teleconsole is more convinent!
 # First setup zerotier and connect two devices
 docker run -d -p 5901:5901 -p 6901:6901 soff/tiny-remote-desktop
 
