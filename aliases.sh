@@ -25,4 +25,4 @@ alias st2='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/
 alias rs='repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j'
 alias f='free -h'
 alias sshn='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
-alias gssh='gcloud cloud-shell ssh'
+alias gs='gcloud cloud-shell ssh'
