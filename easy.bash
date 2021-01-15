@@ -53,3 +53,4 @@ alias ll='ls -lh'
 alias ls='ls --color=tty'
 alias md='mkdir -p'
 alias rd='rmdir -p'
+echo 'set completion-ignore-case on' > ~/.inputrc
