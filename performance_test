@@ -1,0 +1,12 @@
+#!/bin/bash
+read -p 'Location to test(ex: /tmp): ' testing_location
+# server throughput (write speed)
+echo 'Server throughput(write)...'
+sudo dd if=/dev/zero of=$testing_location/test1.img bs=1G count=1 oflag=dsync
+
+# server latency
+echo '
+Server latency(write)...'
+sudo dd if=/dev/zero of=$testing_location/test2.img bs=512 count=1000 oflag=dsync
+
+sudo rm -rf $testing_location/test1.img $testing_location/test2.img
