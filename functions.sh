@@ -85,6 +85,7 @@ curl -s "https://api.telegram.org/bot${bot_api}/sendmessage" --data "text=$msg&c
 
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
+# git config credential.helper store (Don't use if any other has access to your pc)
 
 export PATH=$PATH:$HOME/.diff-so-fancy
 git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
