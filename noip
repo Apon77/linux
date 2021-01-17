@@ -1,0 +1,2 @@
+#!/bin/bash
+curl http://username:password@dynupdate.no-ip.com/nic/update\?hostname\=azure.ddnsking.com\&myip\=$(curl ifconfig.co -s)
