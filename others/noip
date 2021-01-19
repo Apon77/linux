@@ -1,2 +1,8 @@
 #!/bin/bash
-curl http://username:password@dynupdate.no-ip.com/nic/update\?hostname\=azure.ddnsking.com\&myip\=$(curl ifconfig.co -s)
+# noip login
+username=''
+password=''
+hostname='azure.ddnsking.com'
+curl http://$username:$password@dynupdate.no-ip.com/nic/update\?hostname\=$hostname\&myip\=$(curl ifconfig.co -s)
+
+# Usages: sh noip
