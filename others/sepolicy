@@ -1,6 +1,6 @@
 # in phone
 su -c 'cp /sys/fs/selinux/policy . && dmesg | tee dmesg && logcat | tee logcat'
-up dmesg && up logcat
+up dmesg && up logcat && up policy
 
 # in gcp
 docker run -it apon77/sepolicy
