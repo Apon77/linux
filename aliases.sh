@@ -21,6 +21,7 @@ alias wh='which'
 alias rmrf='rm -rf'
 alias path='echo -e ${PATH//:/\\n}'
 alias myip="curl http://ipecho.net/plain; echo"
+alias myisp='curl ipinfo.io'
 alias st2='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python -'
 alias rs='repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j'
 alias f='free -h'
