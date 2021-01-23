@@ -31,7 +31,7 @@ deldog() {
 
 # ping
 p() {
-if [[ $1 == *"."* ]]
+if [[  -n "$1"  ]]
 then
     ping $1
 else
