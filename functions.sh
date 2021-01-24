@@ -10,10 +10,7 @@ then
     then
 	    commit_hash=$(echo $1 | cut -f 7 -d '/' | cut -f 1 -d '#')
     fi
-    git remote add temp_remote $repo_url
-    git fetch temp_remote
-    git cherry-pick $commit_hash
-    git remote rm temp_remote
+    git fetch $repo_url && git log FETCH_HEAD --pretty=oneline | cut -d ' ' -f 1 | grep $commit_hash && git cherry-pick $commit_hash || git remote add temp_remote $repo_url && git fetch temp_remote && git cherry-pick $commit_hash && git remote rm temp_remote
 else
     git cherry-pick $1
 fi
