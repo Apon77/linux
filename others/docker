@@ -11,3 +11,5 @@ docker commit deddd39fa163 ubuntu-nmap
 docker images
 #ubuntu-nmap latest deddd39fa163 24 seconds ago
 #ubuntu latest cf0f3ca922e0 7 days ago
+docker tag deddd39fa163 apon77/ubuntu:v2
+docker push apon77/ubuntu:v2 
