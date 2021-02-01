@@ -1,0 +1,13 @@
+docker pull ubuntu
+docker images
+#ubuntu latest cf0f3ca922e0 7 days ago
+docker run -it cf0f3ca922e0 bin/bash
+apt-get install nmap
+exit
+docker ps -a
+#deddd39fa163 cf0f3ca922e0 bin/bash
+#docker commit [CONTAINER_ID] [new_image_name]
+docker commit deddd39fa163 ubuntu-nmap
+docker images
+#ubuntu-nmap latest deddd39fa163 24 seconds ago
+#ubuntu latest cf0f3ca922e0 7 days ago
