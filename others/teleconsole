@@ -1,10 +1,12 @@
 # install teleconsole
-curl -LO https://github.com/Apon77/binaries/raw/master/x86_64/teleconsole
+curl -LO https://github.com/Apon77/binaries/raw/master/x86_64/teleconsole.tar.xz
+tar -xf teleconsole.tar.xz
 # or,
 curl https://www.teleconsole.com/get.sh | sh
 
 # start session on sharing/remote pc
-teleconsole
+cd teleconsole
+./teleconsole
 
 # Connect session on local pc 
 teleconsole -L 5901:localhost:5901 join 674065e2b97a40a3f543daa5be86c65c73488fb3
