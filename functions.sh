@@ -68,6 +68,10 @@ st() {
 	fi
 }
 
+hc() {
+        tar cv $1 | xz -9 > $2.tar.xz
+}
+ 
 #termux
 if [[ $(uname -a) == *"Android"* ]]; then
 [ ! -d ~/storage ] && termux-setup-storage
