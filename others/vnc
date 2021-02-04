@@ -1,3 +1,4 @@
+# xfce4
 sudo apt update
 sudo apt install xfce4
 sudo apt install tightvncserver
@@ -5,7 +6,6 @@ sudo apt install tightvncserver
 vncserver
 vncserver -kill :1
 
-mv ~/.vnc/xstartup ~/.vnc/xstartup.bak
 echo '#!/bin/bash
 xrdb $HOME/.Xresources
 startxfce4 &' > ~/.vnc/xstartup
@@ -13,4 +13,15 @@ startxfce4 &' > ~/.vnc/xstartup
 chmod +x ~/.vnc/xstartup
 vncserver
 
-# Connect localhost:5901 to get the GUI
+# fluxbox
+sudo su
+apt update
+apt-get install tightvncserver xterm fluxbox iceweasel update-menus
+apt-get install xfonts-base xfonts-75dpi xfonts-100dpi
+exit
+
+echo '#!/bin/bash
+fluxbox' > ~/.vnc/xstartup
+
+chmod +x ~/.vnc/xstartup
+vncserver :1
