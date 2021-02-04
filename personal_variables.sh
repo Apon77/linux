@@ -2,7 +2,7 @@
 git config --global user.name "Apon77"
 git config --global user.email "khalakuzzamanapon5@gmail.com"
 git config --global core.editor vim
-git config --global credential.helper store
+git config --global credential.helper store #dont use this in pc which access other people access
 
 #telegrom ID
 id=571213272
