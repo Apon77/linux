@@ -139,3 +139,5 @@ End-Of-Usage
 }
 
 alias x=extract
+
+[ -d "$HOME/.diff-so-fancy" ] && export PATH=$PATH:$HOME/.diff-so-fancy && git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
