@@ -1,0 +1,4 @@
+#!/bin/bash
+read -p 'Files from this folder(ex: /home/k/vendor): ' folder
+read -p 'Save as(ex: /home/k/aex.txt): ' save_as
+(cd $folder ; for i in *; do sha1sum "$i" ; done) >> $save_as
