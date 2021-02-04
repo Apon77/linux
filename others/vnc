@@ -10,7 +10,7 @@ echo '#!/bin/bash
 xrdb $HOME/.Xresources
 startxfce4 &' > ~/.vnc/xstartup
 
-sudo chmod +x ~/.vnc/xstartup
+chmod +x ~/.vnc/xstartup
 vncserver
 
 # Connect localhost:5901 to get the GUI
