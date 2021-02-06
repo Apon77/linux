@@ -88,3 +88,9 @@ curl -s "https://api.telegram.org/bot${bot_api}/sendmessage" --data "text=$msg&c
 #github/git config
 git config --global credential.helper 'cache --timeout=36000' #10 hours cache
 # git config --global credential.helper store (Don't use if any other has access to your pc)
+
+gpp(){
+	git add --all
+	git commit -m $1
+	git push
+}
