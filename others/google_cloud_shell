@@ -19,5 +19,7 @@ PasswordAuthentication yes
 sudo /etc/init.d/ssh restart
 sudo adduser k
 sudo usermod -aG sudo k
-./ngrok tcp 22
+./ngrok tcp 22 &
+curl -s localhost:4040/api/tunnels | jq -r .tunnels[0].public_url
+
 #ssh k@0.tcp.ngrok.io -p 19745
