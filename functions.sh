@@ -94,3 +94,8 @@ gpp(){
 	git commit -m $1
 	git push
 }
+
+mcd(){
+	mkdir -p $1
+	cd $1
+}
