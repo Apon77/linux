@@ -22,4 +22,10 @@ sudo usermod -aG sudo k
 ./ngrok tcp 22 &
 curl -s localhost:4040/api/tunnels | jq -r .tunnels[0].public_url
 
+#ngrok without downloading ngrok
+cat ~/.ssh/id_rsa.pub
+# paste this key in https://dashboard.ngrok.com/auth/ssh-keys
+# equivalent: `ngrok tcp 22`
+# ssh -R 0:localhost:22 tunnel.us.ngrok.com tcp 22
+
 #ssh k@0.tcp.ngrok.io -p 19745
