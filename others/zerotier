@@ -1,7 +1,7 @@
 # Zerotier
 curl -s https://install.zerotier.com | sudo bash
 sudo /etc/init.d/zerotier-one restart
-sudo zerotier-cli join 8bd5124fd6249474
+sudo zerotier-cli join 8bd5124fd60bc90d
 
 # SSH
 mkdir ~/.ssh
