@@ -16,7 +16,7 @@ docker push apon77/ubuntu:v2
 
 #macOS
 brew install docker docker-machine
-#brew cask install virtualbox
+#brew install --cask virtualbox
 docker-machine create --driver virtualbox default #(here default is the name of machine)
 #docker-machine env default
 ##eval "$(docker-machine env default)"
