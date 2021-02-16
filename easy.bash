@@ -30,7 +30,6 @@ alias gl='git pull'
 alias gm='git merge'
 alias gma='git merge --abort'
 alias gp='git push'
-alias gpsup="git push --set-upstream origin $(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2))"
 alias gr='git remote'
 alias gra='git remote add'
 alias grv='git remote -v'
