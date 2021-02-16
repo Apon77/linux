@@ -1,15 +1,17 @@
 # Zerotier
 curl -s https://install.zerotier.com | sudo bash
-sudo /etc/init.d/zerotier-one restart
+#sudo /etc/init.d/zerotier-one restart
 sudo zerotier-cli join 8bd5124fd60bc90d
 
 # SSH
+# Client (zerotier should be installed)
+ssh-keygen
+cat .ssh/id_rsa.pub
+
+# Server
 mkdir ~/.ssh
 vim ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys 
 sudo /etc/init.d/ssh restart
 
-# Client (zerotier should be installed)
-ssh-keygen
-cat .ssh/id_rsa.pub
 ssh khalakuzzamanapon5@10.147.17.79

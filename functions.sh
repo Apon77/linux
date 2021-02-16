@@ -69,7 +69,7 @@ st() {
 }
 
 hc() {
-        tar cv $1 | xz -9 > $2.tar.xz
+        tar c $1 | xz -9 > $2.tar.xz
 }
  
 #termux
@@ -99,3 +99,5 @@ mcd(){
 	mkdir -p $1
 	cd $1
 }
+
+HISTTIMEFORMAT="%d/%m/%y %T "

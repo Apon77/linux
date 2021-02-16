@@ -29,3 +29,16 @@ cat ~/.ssh/id_rsa.pub
 # ssh -R 0:localhost:22 tunnel.us.ngrok.com tcp 22
 
 #ssh k@0.tcp.ngrok.io -p 19745
+
+# SSH without password!
+# Client
+ssh-keygen
+cat .ssh/id_rsa.pub
+
+# Server
+mkdir ~/.ssh
+vim ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys 
+sudo /etc/init.d/ssh restart
+
+ssh khalakuzzamanapon5@0.tcp.ngrok.io -p 19745
