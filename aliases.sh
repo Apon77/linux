@@ -33,6 +33,7 @@ alias hi=history
 alias dk=docker
 alias dp='docker ps'
 alias dpa='docker ps -a'
+alias da='docker attach'
 alias dca='docker container attach'
 alias drm='docker rm'
 alias drmi='docker rmi'
