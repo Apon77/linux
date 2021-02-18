@@ -1,8 +1,9 @@
 #!/bin/bash
 read -p 'Location to test(ex: /tmp): ' testing_location
+read -p 'Size of file(ex: 1G): ' testing_size
 # server throughput (write speed)
 echo 'Server throughput(write)...'
-sudo dd if=/dev/zero of=$testing_location/test1.img bs=1G count=1 oflag=dsync
+sudo dd if=/dev/zero of=$testing_location/test1.img bs=$testing_size count=1 oflag=dsync
 
 # server latency
 echo '
