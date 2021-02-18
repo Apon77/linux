@@ -11,7 +11,7 @@ docker run -d --hostname lubuntu --name lubuntu --restart always -p 5901:5901 -e
 # SSH
 wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-386.zip
 unzip ngrok*
-./ngrok authtoken 7t4txr7tq2s3PbEN5ugph_37sFyAmrx1vXLrzH27s6x
+./ngrok authtoken 1o4mgRgSxIZ4xL7Tbq59iLY3MJi_XZkQeG9u46ZPVRHAjBNC
 #sudo apt-get install ssh
 sudo vim /etc/ssh/sshd_config
 PasswordAuthentication yes
