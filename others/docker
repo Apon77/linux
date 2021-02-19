@@ -18,7 +18,10 @@ docker push apon77/ubuntu:v2
 brew install docker docker-machine
 #brew install --cask virtualbox
 docker-machine create --driver virtualbox default #(here default is the name of machine)
-#docker-machine env default
-##eval "$(docker-machine env default)"
+#eval "$(docker-machine env default)"
 #docker run hello-world
 #docker-machine stop default
+
+#removes all unused image, container, network
+docker system prune -a
+
