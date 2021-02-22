@@ -1,7 +1,7 @@
 # Zerotier
 curl -s https://install.zerotier.com | sudo bash
 #sudo /etc/init.d/zerotier-one restart
-sudo zerotier-cli join 8bd5124fd60bc90d
+sudo zerotier-cli join 8056c2e21cf19ea8
 
 # SSH
 # Client (zerotier should be installed)
