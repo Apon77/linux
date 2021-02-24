@@ -2,6 +2,10 @@
 curl -s https://install.zerotier.com | sudo bash
 #sudo /etc/init.d/zerotier-one restart
 sudo zerotier-cli join 8056c2e21cf19ea8
+#get assigned ip address
+sudo zerotier-cli -j listnetworks | jq -r .[0].assignedAddresses[0] | cut -d '/' -f 1
+#or,
+sudo zerotier-cli listnetworks | grep / | rev | cut -d / -f 2 | cut -d ' ' -f 1 | rev
 
 # SSH
 # Client (zerotier should be installed)
