@@ -1,0 +1,40 @@
+#server (192.168.192.22)
+sudo apt update
+sudo apt install nfs-kernel-server
+sudo mkdir /public /private
+sudo chmod 755 /public
+sudo chmod 777 /private
+sudo vim /etc/exports
+#inside /etc/exports
+/public *(ro,sync,no_subtree_check) #allows all ip in network to read only
+/private 192.168.192.33(rw,sync,no_subtree_check) #allows only client 192.168.192.33 to read,write,execute)
+#save and exit
+sudo exportfs -arvf
+sudo systemctl start nfs-kernel-server #starts the nfs server
+sudo systemctl enable nfs-kernel-server #auto start at boot
+sudo systemctl status nfs-kernel-server #check if running or not
+
+#client (192.168.192.33)
+#temporary
+sudo apt update
+sudo apt install nfs-common
+showmount -e 192.168.192.22 #server ip
+sudo mkdir /mnt/public /mnt/private
+sudo mount -t nfs 192.168.192.22:/public /mnt/public
+#or,
+#sudo mount -t nfs blue:/public /mnt/public #blue is server domain name
+sudo mount -t nfs 192.168.192.22:/private /mnt/private
+mount #to check if mounted or not
+
+#permanent after reboot
+sudo vim /etc/fstab
+192.168.192.22:/public /mnt/public nfs defaults,_netdev 0 0
+192.168.192.22:/pravet /mnt/private nfs defaults,_netdev 0 0
+sudo umount /mnt/public
+sudo umount /mnt/private
+sudo mount -a #to check fstab working or not
+
+#if ufw is active
+sudo ufw status
+sudo ufw allow nfs
+sudo ufw reload
