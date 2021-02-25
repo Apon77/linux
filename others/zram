@@ -6,15 +6,15 @@ num_devices=2
 echo zram > /etc/modules-load.d/zram.conf
 
 # Configure the number of /dev/zram nodes you need.
-echo 'options zram num_devices=$num_devices' > /etc/modprobe.d/zram.conf
+echo "options zram num_devices=$num_devices" > /etc/modprobe.d/zram.conf
 
 # Create the udev rule as shown in the example.
 vim /etc/udev/rules.d/99-zram.rules
 KERNEL=="zram0", ATTR{disksize}="512M" RUN="/usr/bin/mkswap /dev/zram0", TAG+="systemd"
 KERNEL=="zram1", ATTR{disksize}="512M" RUN="/usr/bin/mkswap /dev/zram1", TAG+="systemd"
 
-vim /etc/fstab
 # Add /dev/zram to your fstab.
+vim /etc/fstab
 /dev/zram0 none swap defaults 0 0
 /dev/zram1 none swap defaults 0 0
 # Reboot to take effect
