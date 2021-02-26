@@ -11,9 +11,10 @@ sudo swapon $swap_file
 #/mnt/swapfile swap swap defaults 0 0
 sudo swapon --show
 #cat /proc/sys/vm/swappiness
-#sudo vim /etc/sysctl.conf
-#sudo sysctl vm.swappiness=10
+#sudo vim /etc/sysctl.conf or sudo vim /etc/sysctl.d/99-swappiness.conf
+#Add this line
 #vm.swappiness=10    #swappiness 10 is good for server
+#sudo sysctl vm.swappiness=10
 
 #turn off
 #sudo swapoff $swap_file
