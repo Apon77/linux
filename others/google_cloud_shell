@@ -30,6 +30,8 @@ cat ~/.ssh/id_rsa.pub
 
 #ssh k@0.tcp.ngrok.io -p 19745
 
+#lynk.sh is better ngrok alternative ig
+
 # SSH without password!
 # Client
 ssh-keygen
