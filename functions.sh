@@ -68,10 +68,6 @@ st() {
 	fi
 }
 
-hc() {
-        tar c $1 | xz -9 > $2.tar.xz
-}
- 
 #termux
 if [[ $(uname -a) == *"Android"* ]]; then
 [ ! -d ~/storage ] && termux-setup-storage
@@ -101,3 +97,7 @@ mcd(){
 }
 
 HISTTIMEFORMAT="%d/%m/%y %T "
+
+com(){
+	tar --use-compress-program="pigz -k -$2 " -cf $1.tar.gz $1
+}
