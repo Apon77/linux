@@ -2,6 +2,9 @@
 read -p 'Swap file location(ex: /mnt/swapfile): ' swap_file
 read -p 'Swap file size(ex: 8G): ' swap_file_size
 
+#swap_file=/mnt/swapfile
+#swap_file_size=2G
+
 sudo swapon --show
 sudo fallocate -l $swap_file_size $swap_file
 sudo chmod 600 $swap_file
