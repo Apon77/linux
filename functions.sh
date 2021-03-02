@@ -101,3 +101,7 @@ HISTTIMEFORMAT="%d/%m/%y %T "
 com(){
 	tar --use-compress-program="pigz -k -$2 " -cf $1.tar.gz $1
 }
+
+m(){
+	curl cheat.sh/$1
+}
