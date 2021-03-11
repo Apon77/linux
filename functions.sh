@@ -41,23 +41,23 @@ gcla() {
 	git clone --recurse-submodules https://github.com/Apon77/$1
 }
 
-#upload limit 500MB and 24 Hours
 up() {
 	curl --upload-file $1 https://free.keep.sh
+	#upload limit 500MB and 24 Hours
 }
 
-#upload limit 25GB, 3 Days and 1 time download
 up2() {
 	curl https://bashupload.com/$(basename $1) --data-binary @$1
+	#upload limit 25GB, 3 Days and 1 time download
 }
 
 up3() {
 	curl -F file=@$1 https://api.anonymousfiles.io/
 }
 
-# 14 days, 10 GB
 up4() {
 	curl --upload-file $1 https://transfer.sh/$(basename $1); echo
+	# 14 days, 10 GB
 }
 #speed test
 st() {
