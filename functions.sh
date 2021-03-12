@@ -78,7 +78,7 @@ tg(){
 bot_api=1336436573:AAFpaGsPLEc90A9LBObk6kSXDvjrySmQH14
 your_telegram_id=$1
 msg=$2
-curl -s "https://api.telegram.org/bot${bot_api}/sendmessage" --data "text=$msg&chat_id=${your_telegram_id}" 1>/dev/null
+curl -s "https://api.telegram.org/bot${bot_api}/sendmessage" --data "text=$msg&chat_id=${your_telegram_id}"
 }
 
 #github/git config
