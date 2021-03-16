@@ -14,4 +14,6 @@ cd /G
 
 # to deattach
 losetup -d amit
+or,
+umount /dev/loop0
 rm -rf amit # if want to remove file too!
