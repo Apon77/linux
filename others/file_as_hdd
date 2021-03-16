@@ -1,0 +1,17 @@
+sudo su
+ls /dev/loop*
+dd if=/dev/zero of=amit bs=1M count=200 # create 200M file named amit
+losetup -a
+losetup /dev/loop0 amit
+ls -lh /dev/loop
+losetup -a
+mkdir /G
+mkfs.ex3 /dev/loop0
+monut /dev/loop0 /G
+df -h
+cd /G
+# anything written here will be written inside amit file. now amit file will be used as hdd!
+
+# to deattach
+losetup -d amit
+rm -rf amit # if want to remove file too!
