@@ -106,5 +106,5 @@ m(){
 	curl cheat.sh/$1
 }
 cnf(){
-	curl https://command-not-found.com/nproc -s|grep apt
+	curl https://command-not-found.com/$1 -s|grep apt
 }
