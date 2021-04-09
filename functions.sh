@@ -75,7 +75,7 @@ fi
 
 # Usages tg id msg
 tg(){
-bot_api=1692865707:AAEfvZh8VXOlXuHtreBzTCZqPIg6aQzvyhE
+bot_api=1692865707:AAGurCDwhaSZ0RwxIuFEYVpYo9kYJEYSwD0
 your_telegram_id=$1
 msg=$2
 curl -s "https://api.telegram.org/bot${bot_api}/sendmessage" --data "text=$msg&chat_id=${your_telegram_id}"
