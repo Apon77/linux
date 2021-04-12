@@ -108,3 +108,5 @@ m(){
 cnf(){
 	curl https://command-not-found.com/$1 -s|grep apt
 }
+
+PATH=$PATH:~/bin
