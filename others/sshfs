@@ -1,0 +1,10 @@
+#on host
+wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+unzip /path/to/ngrok.zip
+./ngrok authtoken 1o4mgRgSxIZ4xL7Tbq59iLY3MJi_XZkQeG9u46ZPVRHAjBN2
+ngrok tcp 22
+#Forwarding                    tcp://2.tcp.ngrok.io:16872 -> localhost:22
+
+#on client
+mkdir -p ~/hi
+sshfs -p 16872 k@0.tcp.ngrok.io:/ ~/hi
