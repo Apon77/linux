@@ -7,7 +7,8 @@ sudo chmod 777 /private
 sudo vim /etc/exports
 #inside /etc/exports
 /public *(ro,sync,no_subtree_check) #allows all ip in network to read only
-/private 192.168.192.33(rw,sync,no_subtree_check) #allows only client 192.168.192.33 to read,write,execute)
+/private *(rw,sync,no_subtree_check) #allows all ip to read,write,execute)
+#/private 192.168.192.33(rw,sync,no_subtree_check) #allows only client 192.168.192.33 to read,write,execute)
 #save and exit
 sudo exportfs -arvf
 sudo systemctl start nfs-kernel-server #starts the nfs server
