@@ -78,7 +78,17 @@ tg(){
 bot_api=1720254391:AAHlmChnUKzmTeGF3xX49cY8WCkv2xOdZr8
 your_telegram_id=$1
 msg=$2
-curl -s "https://api.telegram.org/bot${bot_api}/sendmessage" --data "text=$msg&chat_id=${your_telegram_id}"
+curl \
+	-s "https://api.telegram.org/bot${bot_api}/sendmessage" \
+	-d "text=$msg" \
+	-d "chat_id=${your_telegram_id}" \
+	-d "parse_mode=HTML"
+#tg $id '<code>mono</code>'
+#tg $id "<code>mono</code>"
+#tg $id "<b>bold</b>"
+#tg $id "<i>italic</i>"
+#tg $id "<i><b>bold italic</b></i>"
+#tg $id "<b><i>bold italic</i></b>"
 }
 
 #github/git config
