@@ -5,3 +5,6 @@ sudo apt install openvpn
 sudo openvpn --config wasker.first.ovpn
 # in any pc
 Server will be available at mapping rule with that random port
+
+# SSH method
+# Same like openvpn method
