@@ -122,7 +122,7 @@ cnf(){
 PATH=$PATH:~/bin
 
 #Usages
-echo -e "${Green}I am in green ${Blue}I am in blue"
+#echo -e "${Green}I am in green ${Blue}I am in blue"
 
 # Reset
 Color_Off='\033[0m'       # Text Reset
