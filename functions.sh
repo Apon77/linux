@@ -42,7 +42,7 @@ gcla() {
 }
 
 up() {
-	curl --upload-file $1 https://free.keep.sh
+	curl -T $1 https://free.keep.sh
 	#upload limit 500MB and 24 Hours
 }
 
@@ -56,9 +56,16 @@ up3() {
 }
 
 up4() {
-	curl --upload-file $1 https://transfer.sh/$(basename $1); echo
+	curl -T $1 https://transfer.sh/$(basename $1); echo
 	# 14 days, 10 GB
 }
+
+upt() {
+	curl -H "Max-Downloads: $2" -H "Max-Days: 5" -T $1 http://transfer.sh/$(basename $1); echo
+	# 5 days, with max download limit of $2
+	#usage: `upt file 1` for 1 time download
+}
+
 #speed test
 st() {
 	if [ -z "$1" ];then
