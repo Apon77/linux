@@ -82,7 +82,7 @@ fi
 
 # Usages tg id msg
 tg(){
-bot_api=1720254391:AAHlmChnUKzmTeGF3xX49cY8WCkv2xOdZr8
+bot_api=1720254391:AAHCD2vGrm8-vzhrI9XwiUPQ1uCvHYoz6kM
 your_telegram_id=$1
 msg=$2
 curl \
