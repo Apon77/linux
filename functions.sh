@@ -33,7 +33,7 @@ if [[  -n "$1"  ]]
 then
     ping $1
 else
-    ping 8.8.8.8
+    ping google.com
 fi
 }
 
