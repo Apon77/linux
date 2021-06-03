@@ -1,4 +1,7 @@
 #!/bin/bash
+read -p 'Set vnc password (min 6 letters):
+' password
+echo 'Installing xfce4 & tightvncserver'
 sudo apt -qq update || apt -qq update
 sudo apt -qq install xfce4 || apt -qq install xfce4
 sudo apt -qq install tightvncserver || apt -qq install tightvncserver
@@ -8,5 +11,8 @@ echo '#!/bin/bash
 xrdb $HOME/.Xresources
 startxfce4 &' > ~/.vnc/xstartup
 chmod +x ~/.vnc/xstartup
+
+echo $password | vncpasswd -f > ~/.vnc/passwd
+chmod 0600 ~/.vnc/passwd
 
 vncserver :1
