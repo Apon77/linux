@@ -1,0 +1,17 @@
+#!/bin/bash
+read -p 'Set vnc password (min 6 letters):
+' password
+echo 'Installing fluxbox & tightvncserver'
+sudo apt -qq update || apt -qq update
+sudo apt -qq  install tightvncserver xterm fluxbox menu xfonts-base xfonts-75dpi xfonts-100dpi || apt -qq  install tightvncserver xterm fluxbox menu xfonts-base xfonts-75dpi xfonts-100dpi
+
+mkdir -p ~/.vnc
+echo '#!/bin/bash
+fluxbox' > ~/.vnc/xstartup
+chmod +x ~/.vnc/xstartup
+
+echo $password | vncpasswd -f > ~/.vnc/passwd
+chmod 0600 ~/.vnc/passwd
+
+vncserver :1
+#vncserver -geometry 640x480

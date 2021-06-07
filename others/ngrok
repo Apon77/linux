@@ -1,0 +1,18 @@
+#content of ~/.ngrok2/ngrok.yml file
+authtoken: 4nq9771bPxe8ctg7LKr_2ClH7Y15Zqe4bWLWF9p
+tunnels:
+  http:
+    addr: 80
+    proto: http
+  ssh:
+    addr: 22
+    proto: tcp
+  vnc:
+    addr: 5901
+    proto: tcp
+  app-foo:
+    addr: 8080
+    proto: http
+
+#then $ngrok start --all
+#or $ngrok start app-foo
