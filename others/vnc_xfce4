@@ -1,6 +1,8 @@
 #!/bin/bash
 read -p 'Set vnc password (min 6 letters):
 ' password
+read -p 'Set vnc resolution (1200x800, 800x600, 680x480):
+' resolution
 echo 'Installing xfce4 & tightvncserver'
 sudo apt -qq update || apt -qq update
 sudo apt -qq install xfce4 || apt -qq install xfce4
@@ -15,5 +17,5 @@ chmod +x ~/.vnc/xstartup
 echo $password | vncpasswd -f > ~/.vnc/passwd
 chmod 0600 ~/.vnc/passwd
 
-vncserver :1
-#vncserver -geometry 640x480
+#vncserver :1
+vncserver -geometry $resolution
