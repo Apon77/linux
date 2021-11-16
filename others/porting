@@ -1,0 +1,15 @@
+cd port/
+unzip xiaomi.eu_multi_HMNote4_21.11.10_v12.6-11.zip 
+mv system.new.dat.br hi/
+sudo apt install brotli
+curl -LO https://github.com/xpirt/sdat2img/raw/master/sdat2img.py
+chmod +x sdat2img.py 
+cp system.transfer.list hi/
+cd hi
+sdat2img system.transfer.list system.new.dat system.img
+mv sdat2img.py sdat2img
+cp sdat2img ~/bin/
+sdat2img system.transfer.list system.new.dat system.img
+sudo mount -t ext4 -o loop system.img ./output
+cd output/
+ls
