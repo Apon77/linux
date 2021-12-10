@@ -1,0 +1,12 @@
+ISP Ethernet
+------------
+Connect ISP line in ether1 port
+ether1=ISP
+ether5=LAN
+use winbox and mac(better)/ip
+
+PPP>+ sign>pppoe client>dial up>user, password> add default route should checked>ok
+IP>addresses>+ sign>address=192.168.1.1/24 > interface=ether5
+IP>DHCP server>DHCP>DHCP Setup>DHCP server inteface=ether5>DHCP address space=192.168.1.0/24 >Gateway for DHCP server=192.168.1.1 > address to give out=192.168.1.2-192.168.1.254>DNS server=8.8.8.8 >Lease time=00:10:00
+IP>firewall>NAT>+ sign> general>chain=srcnat>action>masquerade
+Done
