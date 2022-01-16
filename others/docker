@@ -1,3 +1,10 @@
+#installation
+sudo apt update
+sudo apt install docker.io
+sudo systemctl start docker.service #start the docker service
+sudo systemctl enable docker.service #start after each reboot
+sudo usermod -aG docker $USER #run docker without root
+
 docker pull ubuntu
 docker images
 #ubuntu latest cf0f3ca922e0 7 days ago
