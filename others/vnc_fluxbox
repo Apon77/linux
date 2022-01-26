@@ -3,7 +3,13 @@ read -p 'Set vnc password (min 6 letters):
 ' password
 read -p 'Set vnc resolution (1200x800, 800x600, 680x480):
 ' resolution
+
+if [[ -z $resolution ]]; then resolution="800x600" ; fi
+
+echo "VNC pass $password"
+echo "resolution $resolution"
 echo 'Installing fluxbox & tightvncserver'
+
 sudo apt -qq update || apt -qq update
 sudo apt -qq  install tightvncserver xterm fluxbox menu xfonts-base xfonts-75dpi xfonts-100dpi || apt -qq  install tightvncserver xterm fluxbox menu xfonts-base xfonts-75dpi xfonts-100dpi
 
