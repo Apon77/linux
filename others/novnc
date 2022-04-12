@@ -1,0 +1,34 @@
+#!/bin/bash
+read -p 'Set vnc password (min 6 letters):
+' password
+read -p 'Set vnc resolution (1200x800, 800x600, 680x480):
+' resolution
+
+if [[ -z $resolution ]]; then resolution="800x600" ; fi
+
+echo "VNC pass $password"
+echo "resolution $resolution"
+echo 'Installing fluxbox & tightvncserver'
+
+sudo apt -qq update || apt -qq update
+sudo apt -qq  install tightvncserver xterm fluxbox menu xfonts-base xfonts-75dpi xfonts-100dpi || apt -qq  install tightvncserver xterm fluxbox menu xfonts-base xfonts-75dpi xfonts-100dpi
+
+mkdir -p ~/.vnc
+echo '#!/bin/bash
+fluxbox' > ~/.vnc/xstartup
+chmod +x ~/.vnc/xstartup
+
+echo $password | vncpasswd -f > ~/.vnc/passwd
+chmod 0600 ~/.vnc/passwd
+
+#vncserver :1
+vncserver -geometry $resolution
+
+
+sudo apt -y install novnc websockify python-numpy --no-install-recommends
+cd /etc/ssl
+sudo openssl req -x509 -nodes -newkey rsa:2048 -keyout novnc.pem -out novnc.pem -days 365
+sudo chmod 644 novnc.pem
+websockify -D --web=/usr/share/novnc/ --cert=/etc/ssl/novnc.pem 6080 localhost:5901
+#then open port 6080 and preview on it
+
