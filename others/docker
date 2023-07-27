@@ -1,9 +1,11 @@
 #installation
 sudo apt update
-sudo apt install docker.io
+sudo apt install docker.io --no-install-recommends
 sudo systemctl start docker.service #start the docker service
 sudo systemctl enable docker.service #start after each reboot
 sudo usermod -aG docker $USER #run docker without root
+#need to logout and login to get the user added to usergroup docker.
+su k
 
 docker pull ubuntu
 docker images
