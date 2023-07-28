@@ -2,6 +2,7 @@ username=k	#don't use capital letter/space
 password=apon
 
 sudo useradd -m $username && echo -en "$password\n$password" | passwd $username && sudo usermod -aG sudo $username
+#or sudo useradd -m $username && echo $username:$password | sudo chpasswd
 
 #copied method
 pacman -S sudo
