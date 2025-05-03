@@ -1,3 +1,8 @@
-https://github.com/fcwu/docker-ubuntu-vnc-desktop
-docker run -p 6080:80 -p 5900:5900 -e VNC_PASSWORD=mypassword -v /dev/shm:/dev/shm dorowu/ubuntu-desktop-lxde-vnc
+#https://github.com/fcwu/docker-ubuntu-vnc-desktop
+docker run -p 6080:80 -p 5900:5900 -e VNC_PASSWORD=mypassword -v /dev/shm:/dev/shm dorowu/ubuntu-desktop-lxde-vnc #user root
+#or,
+docker run -p 6080:80 -p 5900:5900 -e USER=k -e PASSWORD=mypassword -v /dev/shm:/dev/shm dorowu/ubuntu-desktop-lxde-vnc #user k, can add -e VNC_PASSWORD=mypassword if needed.
+
+#web preview on cloud shell, change port to 6080, preview on port 6080. it does not need extra service. google will give its own link to view the vnc.
+#or,
 ssh -R 80:localhost:6080 nokey@localhost.run
