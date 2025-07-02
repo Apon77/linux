@@ -1,4 +1,5 @@
-PS1='\[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
+#PS1='\[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
+PS1='\t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
 alias src='source ~/.bashrc'
 alias nb='nano ~/.bashrc'
 alias vb='vim ~/.bashrc'
