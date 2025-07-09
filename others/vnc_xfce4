@@ -13,6 +13,7 @@ echo 'Installing xfce4 & tightvncserver'
 sudo apt -qq update || apt -qq update
 sudo apt -qq install xfce4 || apt -qq install xfce4
 sudo apt -qq install tightvncserver || apt -qq install tightvncserver
+sudo apt -qq install dbus-x11 || apt -qq install dbus-x11
 
 mkdir -p ~/.vnc
 echo '#!/bin/bash
