@@ -37,8 +37,8 @@ else
 fi
 }
 
-gcla() {
-	git clone --recurse-submodules https://github.com/Apon77/$1
+gcl() {
+	git clone --recurse-submodules https://github.com/$1 $2
 }
 
 up() {
