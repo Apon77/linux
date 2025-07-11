@@ -5,11 +5,12 @@ sudo apt install tightvncserver
 sudo apt install dbus-x11
 
 #or for minimal,
-sudo apt install --no-install-recommends xfce4 tightvncserver dbus-x11 xfce4-terminal
+sudo apt install --no-install-recommends xfce4 tightvncserver dbus-x11 xfce4-terminal xfonts-base
 
 vncserver
 vncserver -kill :1
 
+mkdir -p ~/.vnc
 echo '#!/bin/bash
 xrdb $HOME/.Xresources
 startxfce4 &' > ~/.vnc/xstartup
