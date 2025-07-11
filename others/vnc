@@ -2,6 +2,10 @@
 sudo apt update
 sudo apt install xfce4
 sudo apt install tightvncserver
+sudo apt install dbus-x11
+
+#or for minimal,
+sudo apt install --no-install-recommends xfce4 tightvncserver dbus-x11 xfce4-terminal
 
 vncserver
 vncserver -kill :1
