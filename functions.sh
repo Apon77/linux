@@ -131,6 +131,23 @@ cnf(){
 	curl https://command-not-found.com/$1 -s|grep apt
 }
 
+iptv(){
+input="$1"
+output=$(basename $1 .m3u8)-filtered.m3u8
+rm -rf $output
+
+while IFS= read -r line;
+do
+        if [[ "$line" == *"EXT"* ]]; then echo $line >> $output; fi
+
+        if [[ "$line" == *"http"* ]]; then
+                if [[ "$line" == *".m3u8"* ]]; then
+                        curl -s -m 1.5 $line|grep 'EXT' && echo $line >> $output;
+                fi;
+        fi;
+done < "$input"
+}
+
 PATH=$PATH:~/bin
 
 #Usages
