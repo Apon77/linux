@@ -38,7 +38,12 @@ fi
 }
 
 gcl() {
-	git clone --recurse-submodules https://github.com/$1 $2
+	if [[ $1 == *"http"* ]]
+	then
+		git clone --recurse-submodules $1 $2
+	else
+		git clone --recurse-submodules https://github.com/$1 $2
+	fi
 }
 
 up() {
