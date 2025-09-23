@@ -142,7 +142,7 @@ do
 
         if [[ "$line" == *"http"* ]]; then
                 if [[ "$line" == *".m3u8"* ]]; then
-                        curl -s -m 1.5 $line|grep 'EXT' && echo $line >> $output;
+                        curl -s -m 1.5 $line|grep 'EXT' -q && echo $line &&  echo $line >> $output;
                 fi;
         fi;
 done < "$input"
