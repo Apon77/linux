@@ -1,0 +1,5 @@
+use ssh to get ip of remote server to local machine, and surf internet as if all traffics are coming from the remote machine. Its helpfull when your ISP has a specific website which can only be accessed by their clients. Then you can get a machine in their internet, start ssh server in their internet. then ssh into it and tunnel all traffic from their machine to your machine.
+
+ssh k@103.33.25.11 -D 1080
+
+now in used localhost:1080 as socks5 proxy, after succesfull connection to the proxy we will get the remote servers ip in the local machine.
