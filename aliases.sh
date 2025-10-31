@@ -27,6 +27,7 @@ alias rs='repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --f
 alias f='free -h'
 alias sshn='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 alias gs='gcloud cloud-shell ssh'
+alias gsp='gcloud cloud-shell ssh --ssh-flag "-D 1080"'
 alias gcls='git clone --recurse-submodules --single-branch --depth=1'
 alias gclf='git clone --recurse-submodules --depth 1 --filter=tree:0 --no-checkout'
 alias hi=history
