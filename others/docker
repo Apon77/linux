@@ -34,3 +34,11 @@ docker-machine create --driver virtualbox default #(here default is the name of 
 #removes all unused image, container, network
 docker system prune -a
 
+
+#docker save images locally so next time can work without docker pull
+docker save -o docker-chromium.tar jlesage/chromium:latest
+#then docker image can be deleted if needed by below command
+docker rmi jlesage/chromium:latest
+#then next time you can load the compressed file without pulling by below command
+docker load -i docker-chromium.tar
+#it will now work same like you pulled the docker image
