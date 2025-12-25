@@ -8,7 +8,7 @@ services:
     image: jlesage/chromium
     ports:
       - "5800:5800"
-      - "5900:5900"
+      #- "5900:5900"
     volumes:
       - "/docker/appdata/chromium:/config:rw"
     environment:
