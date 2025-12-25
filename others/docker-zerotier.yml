@@ -1,0 +1,19 @@
+#use
+#docker exec zerotier-one zerotier-cli join 8056c2e21c000001
+
+#or, create an empty file with the network as name:
+#/var/lib/zerotier-one/networks.d/8056c2e21c000001.conf
+
+version: '3'
+services:
+  zerotier:
+    image: zyclonite/zerotier
+    container_name: zerotier-one
+    devices:
+      - /dev/net/tun
+    network_mode: host
+    volumes:
+      - '/var/lib/zerotier-one:/var/lib/zerotier-one'
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
