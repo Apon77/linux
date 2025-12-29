@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+#https://github.com/Densaugeo/uploadserver
+
+python3 -m pip install --user uploadserver
+
+python3 -m uploadserver 
+#or,
+python3 -m uploadserver 8080
+
+#upload files from browser, or,
+#upload files from cli
+curl -X POST http://127.0.0.1:8000/upload -F 'files=@multiple-example-1.txt' -F 'files=@multiple-example-2.txt'
