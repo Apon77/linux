@@ -1,0 +1,20 @@
+#use and host apache2 webserver in linux
+sudo apt install apache2
+service apache2 status
+sudo vim /etc/apache2/ports.conf #change Listen 80 to 8080 since google only allows 2000-65000
+sudo vim /etc/apache2/sites-enabled/000-default.conf
+#comment DocumentRoot /var/www/html and write DocumentRoot /home/user1 to access all files of user1
+#also change to  <VirtualHost *:8080>
+sudo vim /etc/apache2/apache2.conf
+
+#add following line in apache2.conf file
+<Directory /home/user1>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+</Directory>
+
+#sudo service apache2 start
+#sudo service apache2 stop
+sudo service apache2 restart
+#now preview on port 8080 from upper right corner of cloud shell.
