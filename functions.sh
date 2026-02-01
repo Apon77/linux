@@ -155,7 +155,7 @@ awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'$KEY'\042/){print $(i+1)}}}' | tr -d 
 # curl *** | jqq id
 }
 
-PATH=$PATH:~/bin
+PATH=$PATH$( find ~/bin -type d -printf ":%p" )
 
 #Usages
 #echo -e "${Green}I am in green ${Blue}I am in blue"
