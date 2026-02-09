@@ -25,7 +25,7 @@ chmod 0600 ~/.vnc/passwd
 vncserver -geometry $resolution
 
 
-sudo apt -y install novnc websockify python-numpy --no-install-recommends
+sudo apt -y install novnc websockify python3-numpy --no-install-recommends
 cd /etc/ssl
 sudo openssl req -x509 -nodes -newkey rsa:2048 -keyout novnc.pem -out novnc.pem -days 365
 sudo chmod 644 novnc.pem
