@@ -10,6 +10,6 @@ services:
       - "5800:5800"
       #- "5900:5900"
     volumes:
-      - "/docker/appdata/chromium:/config:rw"
+      - "~/docker/appdata/chromium:/config:rw"
     environment:
       - WEB_FILE_MANAGER=1
