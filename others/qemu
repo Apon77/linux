@@ -1,0 +1,12 @@
+##windows qemu
+#create disk file
+qemu-img create -f qcow2 alpine.img 10G
+
+#install iso in alpine.img file
+qemu-system-x86_64 -boot d -cdrom D:\D\alpine-virt-3.22.2-x86_64.iso -m 2G -hda alpine.img
+
+#run from alpine.img, remove -display none if needed
+qemu-system-x86_64.exe -hda alpine.img -m 2G -accel whpx,kernel-irqchip=off -netdev user,id=mynet0,hostfwd=tcp::8022-:22 -device e1000,netdev=mynet0 -display none
+
+#now can connect with ssh
+ssh username@localhost -p 8022
