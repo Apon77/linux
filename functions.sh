@@ -37,6 +37,7 @@ else
 fi
 }
 
+unalias gcl 2>/dev/null
 gcl() {
 	if [[ $1 == *"http"* ]]
 	then
