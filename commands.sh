@@ -15,10 +15,15 @@ git clone --recurse-submodules https://github.com/so-fancy/diff-so-fancy $HOME/.
 sed -i 's/plugins=(git)/plugins=(git z command-not-found extract zsh-autosuggestions history-substring-search zsh-syntax-highlighting)/g' ~/.zshrc
 #sed -i 's/robbyrussell/powerlevel10k\/powerlevel10k/g' ~/.zshrc
 
-curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/.oh-my-zsh/custom/easy.zsh
-curl https://raw.githubusercontent.com/Apon77/linux/junk/functions.sh > ~/.oh-my-zsh/custom/functions.zsh
-curl https://raw.githubusercontent.com/Apon77/linux/junk/aliases.sh > ~/.oh-my-zsh/custom/aliases.zsh
-#nano ~/.zshrc
+curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/linux/easy.zsh
+curl https://raw.githubusercontent.com/Apon77/linux/junk/functions.sh > ~/linux/functions.sh
+curl https://raw.githubusercontent.com/Apon77/linux/junk/aliases.sh > ~/linux/aliases.sh
+
+ln -s ~/linux/easy.zsh ~/.oh-my-zsh/custom/easy.zsh
+ln -s ~/linux/functions.sh ~/.oh-my-zsh/custom/functions.zsh
+ln -s ~/linux/aliases.sh ~/.oh-my-zsh/custom/aliases.zsh
+
+#vim ~/.zshrc
 #ZSH_THEME="powerlevel10k/powerlevel10k"
 #p10k configure
 source ~/.zshrc
