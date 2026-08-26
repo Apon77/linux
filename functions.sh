@@ -156,6 +156,158 @@ awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'$KEY'\042/){print $(i+1)}}}' | tr -d 
 # curl *** | jqq id
 }
 
+# অটোমেটিক SSH ও ssh-copy-id এরর ফিক্সার (Pubkey ফিক্সসহ চূড়ান্ত সংস্করণ)
+ssh() {
+    local max_attempts=3
+    local attempt=1
+    local extra_args=()
+
+    # পুরোনো সার্ভারের জন্য পাবলিক কি অ্যালগরিদম সাপোর্ট ব্যাকগ্রাউন্ডে রেডি রাখা হচ্ছে
+    extra_args+=("-o" "PubkeyAcceptedKeyTypes=+ssh-rsa")
+
+    while [ $attempt -le $max_attempts ]; do
+        local err_file=$(mktemp)
+        
+        env ssh "${extra_args[@]}" "$@" 2> "$err_file"
+        local ssh_status=$?
+
+        if [ $ssh_status -eq 0 ] || [ $ssh_status -eq 255 -a ! -s "$err_file" ]; then
+            rm -f "$err_file"
+            return $ssh_status
+        fi
+
+        local error_handled=false
+        local error_msg=$(cat "$err_file")
+        rm -f "$err_file"
+
+        # ১. KEX এরর চেক
+        if echo "$error_msg" | grep -q "no matching key exchange method found"; then
+            local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
+            local valid_kex=""
+            for algo in "diffie-hellman-group14-sha1" "diffie-hellman-group1-sha1" "diffie-hellman-group-exchange-sha1"; do
+                if echo "$raw_offers" | grep -q "$algo"; then
+                    valid_kex="${valid_kex:+$valid_kex,}$algo"
+                fi
+            done
+            if [ -n "$valid_kex" ]; then
+                echo "⚠️  Legacy KEX detected! Adding to options: $valid_kex"
+                extra_args+=("-oKexAlgorithms=+$valid_kex")
+                error_handled=true
+            fi
+        fi
+
+        # ২. Host Key এরর চেক
+        if echo "$error_msg" | grep -q "no matching host key type found"; then
+            local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
+            local valid_hk=""
+            for algo in "ssh-rsa" "ssh-dss"; do
+                if echo "$raw_offers" | grep -q "$algo"; then
+                    valid_hk="${valid_hk:+$valid_hk,}$algo"
+                fi
+            done
+            if [ -n "$valid_hk" ]; then
+                echo "⚠️  Legacy HostKey detected! Adding to options: $valid_hk"
+                extra_args+=("-oHostKeyAlgorithms=+$valid_hk")
+                error_handled=true
+            fi
+        fi
+
+        # ৩. Host Key Changed এরর চেক
+        if echo "$error_msg" | grep -q "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED"; then
+            local target_host=""
+            for arg in "$@"; do target_host="$arg"; done
+            echo "⚠️  Remote host key changed for $target_host! Removing old key..."
+            ssh-keygen -R "$target_host" 2>/dev/null
+            error_handled=true
+        fi
+
+        if [ "$error_handled" = false ]; then
+            echo "$error_msg" >&2
+            return $ssh_status
+        fi
+
+        echo "🔄 Retrying connection with updated parameters..."
+        attempt=$((attempt + 1))
+    done
+
+    return 1
+}
+
+ssh-copy-id() {
+    local max_attempts=3
+    local attempt=1
+    local extra_args=()
+
+    # ssh-copy-id এর জন্যও পাবলিক কি অপশনটি ডিফল্টভাবে যুক্ত করা হলো
+    extra_args+=("-o" "PubkeyAcceptedKeyTypes=+ssh-rsa")
+
+    while [ $attempt -le $max_attempts ]; do
+        local err_file=$(mktemp)
+        
+        env ssh-copy-id "${extra_args[@]}" "$@" 2> "$err_file"
+        local ssh_status=$?
+
+        if [ $ssh_status -eq 0 ] || [ $ssh_status -eq 255 -a ! -s "$err_file" ]; then
+            rm -f "$err_file"
+            return $ssh_status
+        fi
+
+        local error_handled=false
+        local error_msg=$(cat "$err_file")
+        rm -f "$err_file"
+
+        if echo "$error_msg" | grep -q "no matching key exchange method found"; then
+            local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
+            local valid_kex=""
+            for algo in "diffie-hellman-group14-sha1" "diffie-hellman-group1-sha1" "diffie-hellman-group-exchange-sha1"; do
+                if echo "$raw_offers" | grep -q "$algo"; then
+                    valid_kex="${valid_kex:+$valid_kex,}$algo"
+                fi
+            done
+            if [ -n "$valid_kex" ]; then
+                echo "⚠️  [ssh-copy-id] Legacy KEX detected! Adding options..."
+                extra_args+=("-o" "KexAlgorithms=+$valid_kex")
+                error_handled=true
+            fi
+        fi
+
+        if echo "$error_msg" | grep -q "no matching host key type found"; then
+            local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
+            local valid_hk=""
+            for algo in "ssh-rsa" "ssh-dss"; do
+                if echo "$raw_offers" | grep -q "$algo"; then
+                    valid_hk="${valid_hk:+$valid_hk,}$algo"
+                fi
+            done
+            if [ -n "$valid_hk" ]; then
+                echo "⚠️  [ssh-copy-id] Legacy HostKey detected! Adding options..."
+                extra_args+=("-o" "HostKeyAlgorithms=+$valid_hk")
+                error_handled=true
+            fi
+        fi
+
+        if echo "$error_msg" | grep -q "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED"; then
+            local target_host=""
+            for arg in "$@"; do target_host="$arg"; done
+            echo "⚠️  [ssh-copy-id] Remote host key changed for $target_host! Removing old key..."
+            ssh-keygen -R "$target_host" 2>/dev/null
+            error_handled=true
+        fi
+
+        if [ "$error_handled" = false ]; then
+            echo "$error_msg" >&2
+            return $ssh_status
+        fi
+
+        echo "🔄 Retrying ssh-copy-id with updated parameters..."
+        attempt=$((attempt + 1))
+    done
+
+    return 1
+}
+
+
+
 PATH=$PATH$( find ~/bin -type d -printf ":%p" )
 
 #Usages
