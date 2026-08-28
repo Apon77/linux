@@ -156,82 +156,117 @@ awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'$KEY'\042/){print $(i+1)}}}' | tr -d 
 # curl *** | jqq id
 }
 
-# অটোমেটিক SSH ও ssh-copy-id এরর ফিক্সার (Pubkey ফিক্সসহ চূড়ান্ত সংস্করণ)
-ssh() {
-    local max_attempts=3
-    local attempt=1
-    local extra_args=()
 
-    # পুরোনো সার্ভারের জন্য পাবলিক কি অ্যালগরিদম সাপোর্ট ব্যাকগ্রাউন্ডে রেডি রাখা হচ্ছে
-    extra_args+=("-o" "PubkeyAcceptedKeyTypes=+ssh-rsa")
 
-    while [ $attempt -le $max_attempts ]; do
-        local err_file=$(mktemp)
+ssh () {
+        local max_attempts=3
+        local attempt=1
+        local extra_args=()
+        extra_args+=("-o" "PubkeyAcceptedKeyTypes=+ssh-rsa")
         
-        env ssh "${extra_args[@]}" "$@" 2> "$err_file"
-        local ssh_status=$?
-
-        if [ $ssh_status -eq 0 ] || [ $ssh_status -eq 255 -a ! -s "$err_file" ]; then
-            rm -f "$err_file"
-            return $ssh_status
-        fi
-
-        local error_handled=false
-        local error_msg=$(cat "$err_file")
-        rm -f "$err_file"
-
-        # ১. KEX এরর চেক
-        if echo "$error_msg" | grep -q "no matching key exchange method found"; then
-            local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
-            local valid_kex=""
-            for algo in "diffie-hellman-group14-sha1" "diffie-hellman-group1-sha1" "diffie-hellman-group-exchange-sha1"; do
-                if echo "$raw_offers" | grep -q "$algo"; then
-                    valid_kex="${valid_kex:+$valid_kex,}$algo"
-                fi
-            done
-            if [ -n "$valid_kex" ]; then
-                echo "⚠️  Legacy KEX detected! Adding to options: $valid_kex"
-                extra_args+=("-oKexAlgorithms=+$valid_kex")
-                error_handled=true
+        # ১. কমান্ড লাইন থেকে রিমোট হোস্টের IP বা নাম বের করা
+        local target_host=""
+        for arg in "$@"; do
+            # SSH অপশন (-o, -p ইত্যাদি) বাদে হোস্ট নেম বা user@host খোঁজা
+            if [[ "$arg" != -* && "$arg" != [0-9]* && "$arg" != *"="* ]]; then
+                target_host="${arg#*@}" # user@host থেকে শুধু host আলাদা করা
             fi
-        fi
+        done
 
-        # ২. Host Key এরর চেক
-        if echo "$error_msg" | grep -q "no matching host key type found"; then
-            local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
-            local valid_hk=""
-            for algo in "ssh-rsa" "ssh-dss"; do
-                if echo "$raw_offers" | grep -q "$algo"; then
-                    valid_hk="${valid_hk:+$valid_hk,}$algo"
+        while [ $attempt -le $max_attempts ]
+        do
+                local err_file=$(mktemp)
+                env ssh "${extra_args[@]}" "$@" 2> "$err_file"
+                local ssh_status=$?
+                if [ $ssh_status -eq 0 ] || [ $ssh_status -eq 255 -a ! -s "$err_file" ]
+                then
+                        rm -f "$err_file"
+                        return $ssh_status
                 fi
-            done
-            if [ -n "$valid_hk" ]; then
-                echo "⚠️  Legacy HostKey detected! Adding to options: $valid_hk"
-                extra_args+=("-oHostKeyAlgorithms=+$valid_hk")
-                error_handled=true
-            fi
-        fi
+                
+                local error_handled=false
+                local error_msg=$(cat "$err_file")
+                rm -f "$err_file"
+                
+                # কাস্টম ফাংশন: .ssh/config-এ কনফিগারেশন রাইট করার জন্য
+                write_to_ssh_config() {
+                    local key="$1"
+                    local value="$2"
+                    if [ -n "$target_host" ]; then
+                        echo -n "❓ Legacy $key detected for [$target_host]. Add to ~/.ssh/config permanently? (y/n): "
+                        read -r response < /dev/tty
+                        if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+                            mkdir -p ~/.ssh && chmod 700 ~/.ssh
+                            # আগে থেকে Host এন্ট্রি আছে কিনা চেক করা, না থাকলে নতুন তৈরি করা
+                            if ! grep -q "Host $target_host" ~/.ssh/config 2>/dev/null; then
+                                echo -e "\nHost $target_host" >> ~/.ssh/config
+                            fi
+                            # নির্দিষ্ট কনফিগারেশনটি যোগ করা (ডুপ্লিকেট এড়াতে awk বা sed ব্যবহার করা যেতে পারে, এখানে সরাসরি অ্যাপেন্ড করা হলো)
+                            echo "    $key +$value" >> ~/.ssh/config
+                            echo "✅ Saved to ~/.ssh/config! Now try running normal ssh again."
+                        fi
+                    fi
+                }
 
-        # ৩. Host Key Changed এরর চেক
-        if echo "$error_msg" | grep -q "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED"; then
-            local target_host=""
-            for arg in "$@"; do target_host="$arg"; done
-            echo "⚠️  Remote host key changed for $target_host! Removing old key..."
-            ssh-keygen -R "$target_host" 2>/dev/null
-            error_handled=true
-        fi
+                # ২. KEX Error Handling
+                if echo "$error_msg" | grep -q "no matching key exchange method found"
+                then
+                        local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
+                        local valid_kex=""
+                        for algo in "diffie-hellman-group14-sha1" "diffie-hellman-group1-sha1" "diffie-hellman-group-exchange-sha1"
+                        do
+                                if echo "$raw_offers" | grep -q "$algo"; then
+                                        valid_kex="${valid_kex:+$valid_kex,}$algo"
+                                fi
+                        done
+                        if [ -n "$valid_kex" ]; then
+                                write_to_ssh_config "KexAlgorithms" "$valid_kex"
+                                # বর্তমান সেশনের জন্য কমান্ডে যোগ করা হচ্ছে যাতে কানেকশন ড্রপ না করে
+                                extra_args+=("-oKexAlgorithms=+$valid_kex")
+                                error_handled=true
+                        fi
+                fi
 
-        if [ "$error_handled" = false ]; then
-            echo "$error_msg" >&2
-            return $ssh_status
-        fi
+                # ৩. Host Key Error Handling
+                if echo "$error_msg" | grep -q "no matching host key type found"
+                then
+                        local raw_offers=$(echo "$error_msg" | grep -oE "Their offer: .*" | cut -d: -f2 | tr -d ' ')
+                        local valid_hk=""
+                        for algo in "ssh-rsa" "ssh-dss"
+                        do
+                                if echo "$raw_offers" | grep -q "$algo"; then
+                                        valid_hk="${valid_hk:+$valid_hk,}$algo"
+                                fi
+                        done
+                        if [ -n "$valid_hk" ]; then
+                                write_to_ssh_config "HostKeyAlgorithms" "$valid_hk"
+                                extra_args+=("-oHostKeyAlgorithms=+$valid_hk")
+                                error_handled=true
+                        fi
+                fi
 
-        echo "🔄 Retrying connection with updated parameters..."
-        attempt=$((attempt + 1))
-    done
+                # ৪. Host Identification Changed Error Handling
+                if echo "$error_msg" | grep -q "WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED"
+                then
+                        echo "⚠️  Remote host key changed for $target_host! Removing old key..."
+                        ssh-keygen -R "$target_host" 2> /dev/null
+                        error_handled=true
+                fi
 
-    return 1
+                if [ "$error_handled" = false ]
+                then
+                        echo "$error_msg" >&2
+                        return $ssh_status
+                fi
+
+                echo "🔄 Retrying connection with updated parameters..."
+                attempt=$((attempt + 1))
+        done
+        return 1
 }
+
+
+
 
 ssh-copy-id() {
     local max_attempts=3
