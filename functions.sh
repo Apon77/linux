@@ -72,6 +72,17 @@ upt() {
 	#usage: `upt file 1` for 1 time download
 }
 
+up() {
+	curl --upload-file $1 https://sendit.sh/
+}
+
+up2() {
+	curl -H "X-Expiration-Seconds: 86400" bashupload.app -T $1
+}
+
+
+
+
 #speed test
 st() {
 	if [ -z "$1" ];then
