@@ -1,6 +1,17 @@
 #PS1='\[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
 #PS1='\t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
-PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
+#PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
+# Determine the best text trimmer available for the git branch string
+if command -v colrm >/dev/null 2>&1; then
+    _git_trimmer="colrm 1 2"
+else
+    _git_trimmer="cut -c 3-"
+fi
+
+# Set your universal prompt using the detected trimmer
+PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '^*' | $_git_trimmer)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]'
+
+
 alias src='source ~/.bashrc'
 alias nb='nano ~/.bashrc'
 alias vb='vim ~/.bashrc'
