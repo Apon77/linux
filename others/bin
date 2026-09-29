@@ -1,0 +1,113 @@
+#!/bin/bash
+set -e
+
+DIR="$HOME/bin/notroot"
+APT_ROOT="$HOME/.local/share/apt-rootless"
+TRACK="$APT_ROOT/installed"
+
+show_help() {
+    echo "Usage: bin [install|i|remove|r|search|s|list|l] <package>"
+    exit 1
+}
+
+if [ $# -lt 1 ]; then show_help; fi
+
+CMD="$1"
+PKG="${2:-}"
+TMP="$HOME/tmp_debs_$PKG"
+
+OPTS="-o Dir::State=$APT_ROOT/state -o Dir::State::Lists=$APT_ROOT/lists -o Dir::Cache=$APT_ROOT/cache -o Dir::Cache::archives=$APT_ROOT/cache/archives -o Dir::Etc::Preferences=$APT_ROOT/state/preferences -o Dir::Etc::PreferencesParts=$APT_ROOT/state/preferences.d"
+
+do_install() {
+    [ -z "$PKG" ] && show_help
+    mkdir -p "$DIR" "$TMP" "$TRACK" "$APT_ROOT/lists/partial" "$APT_ROOT/cache/archives/partial" "$APT_ROOT/state/preferences.d"
+    
+    mkdir -p ~/.cloudshell && touch ~/.cloudshell/no-apt-get-warning
+    apt-get $OPTS update
+    
+    cd "$TMP"
+    DEPS=$(apt-cache $OPTS depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances "$PKG" | grep -E "^\s*(Depends|PreDepends):" | awk '{print $2}' | grep -v '^<' | sort -u)
+    echo "$PKG $DEPS" | xargs apt-get $OPTS download
+    
+    true > "$TRACK/$PKG.list"
+    for f in *.deb; do
+        dpkg-deb -c "$f" | awk '{print $6}' | sed 's|^\./||' | grep -v '^$' >> "$TRACK/$PKG.list"
+        dpkg -x "$f" "$DIR/"
+    done
+    
+    cd "$DIR"
+    rm -rf "$TMP"
+    
+    VIM_VER=$(basename $(ls -d usr/share/vim/vim[0-9]* 2>/dev/null) 2>/dev/null || echo "")
+
+    if [ -d "usr/bin" ]; then
+        for b_path in usr/bin/*; do
+            b_name=$(basename "$b_path")
+            [ "$b_name" == "*.real" ] && continue
+            
+            if [ -L "$b_path" ]; then
+                ln -sf "$(readlink "$b_path")" "$b_name"
+                echo "$b_name" >> "$TRACK/$PKG.list"
+                continue
+            fi
+            
+            if [ -f "$b_path" ]; then
+                mv "usr/bin/$b_name" "usr/bin/$b_name.real"
+                echo "usr/bin/$b_name.real" >> "$TRACK/$PKG.list"
+                
+                cat << 'EOF' > "$b_name"
+#!/bin/bash
+S_DIR="$(cd "$(dirname "${BASH_SOURCE}")" &> /dev/null && pwd)"
+[ -n "__V__" ] && export VIMRUNTIME="$S_DIR/usr/share/vim/__V__"
+export LD_LIBRARY_PATH="$S_DIR/usr/lib:$S_DIR/usr/lib/x86_64-linux-gnu:$S_DIR/lib:$S_DIR/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+export XDG_DATA_DIRS="$S_DIR/usr/share:$XDG_DATA_DIRS"
+exec "$S_DIR/usr/bin/__B__.real" "$@"
+EOF
+                sed -i "s|__B__|$b_name|g; s|__V__|$VIM_VER|g" "$b_name"
+                chmod +x "$b_name"
+                echo "$b_name" >> "$TRACK/$PKG.list"
+            fi
+        done
+        [ -f "vim.basic" ] && [ ! -f "vim" ] && ln -sf vim.basic vim && echo "vim" >> "$TRACK/$PKG.list"
+    fi
+    echo "SUCCESS: Installed $PKG"
+}
+
+do_remove() {
+    [ -z "$PKG" ] && show_help
+    [ ! -f "$TRACK/$PKG.list" ] && echo "Error: $PKG not found" && exit 1
+    
+    cd "$DIR"
+    tac "$TRACK/$PKG.list" | while read -r p; do
+        [ -z "$p" ] && continue
+        [ -f "$p" ] || [ -L "$p" ] && rm -f "$p"
+        [ -d "$p" ] && rmdir "$p" 2>/dev/null || true
+    done
+    rm -f "$TRACK/$PKG.list"
+    echo "SUCCESS: Removed $PKG"
+}
+
+do_search() {
+    [ -z "$PKG" ] && show_help
+    mkdir -p "$APT_ROOT/lists/partial"
+    
+    # FIX: Check if database lists are truly empty without causing array expansions errors
+    if [ -z "$(ls -A "$APT_ROOT/lists" 2>/dev/null | grep -E 'InRelease|Packages')" ]; then
+        apt-get $OPTS update > /dev/null
+    fi
+    apt-cache $OPTS search "$PKG"
+}
+
+do_list() {
+    echo "=== Installed Packages ==="
+    [ -d "$TRACK" ] && [ "$(ls -A "$TRACK"/*.list 2>/dev/null)" ] && basename -s .list "$TRACK"/*.list || echo "None"
+}
+
+case "$CMD" in
+    install|i) do_install ;;
+    remove|r)  do_remove  ;;
+    search|s)  do_search  ;;
+    list|l)    do_list    ;;
+    *)         show_help  ;;
+esac
+
