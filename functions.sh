@@ -136,6 +136,12 @@ com(){
 	tar --use-compress-program="pigz -k -${2:-6}" -cf "$1.tar.gz" "$1"
 }
 
+decom () {
+    local dest="${2:-$HOME/bin}"
+    mkdir -p "$dest"
+    tar xzvf "$1" -C "$dest"
+}
+
 m(){
 	curl cheat.sh/$1
 }
