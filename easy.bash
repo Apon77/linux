@@ -13,8 +13,6 @@ PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '^*' |
 
 
 alias src='source ~/.bashrc'
-alias nb='nano ~/.bashrc'
-alias vb='vim ~/.bashrc'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
