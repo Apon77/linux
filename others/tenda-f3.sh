@@ -24,12 +24,13 @@ LOGIN_URL="${BASE_URL}/login/Auth"
 DATA_URL="${BASE_URL}/goform/getQos"
 DATA_MODULES="localhost,onlineList,blackList"
 
-INTERVAL_SECONDS=10
+INTERVAL_SECONDS=2
 OUTPUT_FILE="$(cd "$(dirname "$0")" && pwd)/bandwidth_log.txt"
 COOKIE_JAR="$(mktemp)"
 VALIDATION_KEYWORD="onlineList"         # must appear in a healthy response
 
 PROXY_SERVER=""                         # e.g. "socks5://localhost:1080"; empty disables it
+#PROXY_SERVER="socks5://localhost:1080"                         # e.g. "socks5://localhost:1080"; empty disables it
 DEBUG=1                                 # 1 = verbose, 0 = quiet
 # ------------------------------------------------------------------
 
@@ -83,7 +84,7 @@ print_and_save() {
         out="${ts}	${text}"
     fi
 
-    echo "$out" | tee -a "$OUTPUT_FILE"
+    echo "$out" |grep 0.103| tee -a "$OUTPUT_FILE"
 }
 
 log "Logging to ${OUTPUT_FILE} every ${INTERVAL_SECONDS}s. Ctrl+C to stop."
@@ -98,6 +99,6 @@ while true; do
         reading=$(fetch_data)
     fi
     print_and_save "$reading"
-    log "saved (${#reading} chars)"
+#    log "saved (${#reading} chars)"
     sleep "$INTERVAL_SECONDS"
 done
