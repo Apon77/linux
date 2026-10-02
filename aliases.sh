@@ -3,7 +3,7 @@ alias gcp='gpick'
 alias gpc='gpick'
 alias c='clear'
 alias n='nano'
-alias v='vim'
+command -v vim &>/dev/null && alias v=vim || alias v=vi
 alias tx='tmux'
 alias t='tmux attach -t0'
 alias t1='tmux attach -t1'
