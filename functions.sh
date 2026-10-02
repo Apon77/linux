@@ -174,6 +174,10 @@ awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'$KEY'\042/){print $(i+1)}}}' | tr -d 
 # curl *** | jqq id
 }
 
+sleep() {
+    for i in $(seq "$1" -1 1); do echo -ne "$i \r"; command sleep 1; done; echo -ne "\r   \r"
+}
+
 [ -d ~/bin ] && PATH="$PATH$(find ~/bin -type d | awk '{printf ":%s", $0}')"
 
 #Usages
