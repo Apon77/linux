@@ -27,7 +27,6 @@ alias gbd='git branch -d'
 alias gba='git branch -a'
 alias gco='git checkout'
 alias gcb='git checkout -b'
-alias grep='grep --color=auto --exclude-dir={.bzr,CVS,.git,.hg,.svn,.idea,.tox}'
 alias gc='git commit -v'
 alias 'gc!'='git commit -v --amend'
 alias gcf='git config --list'
@@ -74,6 +73,8 @@ alias glol='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %C
 alias glola='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'' --all'
 alias glols='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'' --stat'
 alias gunwip='git log -n 1 | grep -q -c "\-\-wip\-\-" && git reset HEAD~1'
+
+grep --help 2>&1 | grep -q excl && alias grep='grep --color=auto --exclude-dir={.bzr,CVS,.git,.hg,.svn,.idea,.tox,.venv,venv}' || alias grep='grep'
 
 echo 'set completion-ignore-case on' > ~/.inputrc
 
