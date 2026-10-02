@@ -1,6 +1,6 @@
-#PS1='\[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
-#PS1='\t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
-#PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
+#PS1='\[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
+#PS1='\t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
+#PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
 # Determine the best text trimmer available for the git branch string
 if command -v colrm >/dev/null 2>&1; then
     _git_trimmer="colrm 1 2"
@@ -9,7 +9,7 @@ else
 fi
 
 # Set your universal prompt using the detected trimmer
-PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(git branch 2>/dev/null | grep '^*' | $_git_trimmer)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]'
+PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '^*' | $_git_trimmer)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]'
 
 
 alias src='source ~/.bashrc'
@@ -58,7 +58,7 @@ alias ll='ls -lh'
 alias ls='ls --color=tty'
 alias md='mkdir -p'
 alias rd='rmdir -p'
-alias gke="\gitk --all $(git log -g --pretty=%h)"
+alias gke='gitk --all $(git log -g --pretty=%h)'
 alias glg='git log --stat'
 alias glgg='git log --graph'
 alias glgga='git log --graph --decorate --all'
@@ -151,4 +151,4 @@ End-Of-Usage
 
 alias x=extract
 
-[ -d "$HOME/.diff-so-fancy" ] && export PATH=$PATH:$HOME/.diff-so-fancy && git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
+[ -d "$HOME/.diff-so-fancy" ] && export PATH=$PATH:$HOME/.diff-so-fancy && command -v git &>/dev/null && git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
