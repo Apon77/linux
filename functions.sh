@@ -116,7 +116,8 @@ curl \
 }
 
 #github/git config
-git config --global credential.helper 'cache --timeout=36000' #10 hours cache
+command -v git &>/dev/null && git config --global credential.helper 'cache --timeout=36000' #10 hours cache
+
 # git config --global credential.helper store (Don't use if any other has access to your pc)
 
 gpp(){
