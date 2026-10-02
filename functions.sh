@@ -351,7 +351,7 @@ ssh-copy-id() {
 
 
 
-PATH="$PATH$(find ~/bin -type d | awk '{printf ":%s", $0}')"
+[ -d ~/bin ] && PATH="$PATH$(find ~/bin -type d | awk '{printf ":%s", $0}')"
 
 
 #Usages
