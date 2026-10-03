@@ -178,6 +178,10 @@ sleep() {
     for i in $(seq "$1" -1 1); do echo -ne "$i \r"; command sleep 1; done; echo -ne "\r   \r"
 }
 
+dka(){
+	docker start "$1" && docker attach "$1"
+}
+
 [ -d ~/bin ] && PATH="$PATH$(find ~/bin -type d | awk '{printf ":%s", $0}')"
 
 #Usages
