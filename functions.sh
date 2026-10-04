@@ -182,7 +182,7 @@ dka(){
 	docker start "$1" && docker attach "$1"
 }
 
-[ -d ~/bin ] && PATH="$PATH$(find ~/bin -type d | awk '{printf ":%s", $0}')"
+[ -d ~/bin ] && PATH="$PATH$(find ~/bin -type d \( -path ~/bin -o -name "bin" \) | awk '{printf ":%s", $0}')"
 
 #Usages
 #echo -e "${Green}I am in green ${Blue}I am in blue"
