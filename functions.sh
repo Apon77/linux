@@ -86,9 +86,11 @@ up2() {
 #speed test
 st() {
 	if [ -z "$1" ];then
-		wget -O /dev/null --progress=dot:mega http://cachefly.cachefly.net/5mb.test ; date
+		command -v wget >/dev/null 2>&1 && wget -O /dev/null --progress=dot:mega http://cachefly.cachefly.net/5mb.test && date || curl -o /dev/null http://cachefly.cachefly.net/5mb.test 
+		
 	else	
-		wget -O /dev/null --progress=dot:mega http://cachefly.cachefly.net/${1}mb.test ; date
+		wget -O /dev/null --progress=dot:mega http://cachefly.cachefly.net/${1}mb.test && date || curl -o /dev/null http://cachefly.cachefly.net/${1}mb.test 
+
 	fi
 }
 
