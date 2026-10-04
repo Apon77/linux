@@ -66,3 +66,4 @@ alias vz='vim ~/.zshrc'
 alias mon0='echo "0" | sudo tee /sys/module/wlan/parameters/con_mode'
 alias mon1='echo "4" | sudo tee /sys/module/wlan/parameters/con_mode'
 alias cx="chmod +x"
+alias vm="vim Makefile"
