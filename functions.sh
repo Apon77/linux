@@ -184,6 +184,10 @@ dka(){
 	docker start "$1" && docker attach "$1"
 }
 
+ubuntu() {
+    docker compose -f ~/linux/others/docker-ubuntu-24.04.yml run --rm --name ubuntu "$@" ubuntu
+}
+
 [ -d ~/bin ] && PATH="$PATH$(find ~/bin -type d \( -path ~/bin -o -name "bin" \) | awk '{printf ":%s", $0}')"
 
 #Usages

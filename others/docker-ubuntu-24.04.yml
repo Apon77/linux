@@ -1,0 +1,28 @@
+#docker compose -f ~/linux/others/docker-ubuntu-24.04.yml run --rm --name ubuntu ubuntu
+services:
+  ubuntu:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM ubuntu:24.04
+        RUN export DEBIAN_FRONTEND=noninteractive && \
+            apt-get update -qq && \
+            apt-get install -y -qq --no-install-recommends curl ca-certificates passwd && \
+            rm -rf /var/lib/apt/lists/* && \
+            echo 'root:admin' | chpasswd && \
+            useradd -m -s /bin/bash k && \
+            echo 'k:admin' | chpasswd
+        USER k
+        WORKDIR /home/k
+    image: ubuntu:local                 
+    container_name: ubuntu
+    hostname: ubuntu                    
+    stdin_open: true
+    tty: true
+    environment:
+      - TZ=Asia/Dhaka                   
+    volumes:
+      - /tmp:/tmp
+    ports:
+      - "8080:8080"                     
+
