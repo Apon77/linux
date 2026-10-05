@@ -29,8 +29,7 @@ OUTPUT_FILE="$(cd "$(dirname "$0")" && pwd)/bandwidth_log.txt"
 COOKIE_JAR="$(mktemp)"
 VALIDATION_KEYWORD="onlineList"         # must appear in a healthy response
 
-PROXY_SERVER=""                         # e.g. "socks5://localhost:1080"; empty disables it
-#PROXY_SERVER="socks5://localhost:1080"                         # e.g. "socks5://localhost:1080"; empty disables it
+curl -sx socks5h://127.0.0.1:1080 --connect-timeout 2 google.com >/dev/null 2>&1 && PROXY_SERVER="socks5://localhost:1080"|| PROXY_SERVER=""
 DEBUG=1                                 # 1 = verbose, 0 = quiet
 # ------------------------------------------------------------------
 
@@ -84,7 +83,7 @@ print_and_save() {
         out="${ts}	${text}"
     fi
 
-    echo "$out" |grep 0.103| tee -a "$OUTPUT_FILE"
+    echo "$out" | grep "0.103" | tee -a "$OUTPUT_FILE" || echo "$out" | tee -a "$OUTPUT_FILE"
 }
 
 log "Logging to ${OUTPUT_FILE} every ${INTERVAL_SECONDS}s. Ctrl+C to stop."
