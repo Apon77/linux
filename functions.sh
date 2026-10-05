@@ -184,7 +184,7 @@ dka(){
 	docker start "$1" && docker attach "$1"
 }
 
-ubuntu() {
+u() {
     docker compose -f ~/linux/others/docker-ubuntu-24.04.yml run --rm --name ubuntu "$@" ubuntu
 }
 
