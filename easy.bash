@@ -1,7 +1,3 @@
-#PS1='\[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
-#PS1='\t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
-#PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '"'"'^*'"'"' | colrm 1 2)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]\[\e0'
-# Determine the best text trimmer available for the git branch string
 if command -v colrm >/dev/null 2>&1; then
     _git_trimmer="colrm 1 2"
 else
@@ -11,38 +7,52 @@ fi
 # Set your universal prompt using the detected trimmer
 PS1='\u \t \[\e[0;38;5;41m\]\w\[\e[0;93m\]$(command -v git &>/dev/null && git branch 2>/dev/null | grep '^*' | $_git_trimmer)\[\e[0;38;5;201m\]\$\[\e[m\] \[\e[0m\]'
 
+echo 'set completion-ignore-case on' > ~/.inputrc
 
-alias src='source ~/.bashrc'
+[ -d "$HOME/.diff-so-fancy" ] && export PATH=$PATH:$HOME/.diff-so-fancy && command -v git &>/dev/null && git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
+
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias .....='cd ../../../..'
-alias gst='git status'
 alias g=git
 alias ga='git add'
 alias gaa='git add --all'
 alias gb='git branch'
-alias gbD='git branch -D'
-alias gbd='git branch -d'
 alias gba='git branch -a'
-alias gco='git checkout'
-alias gcb='git checkout -b'
+alias gbd='git branch -d'
+alias gbD='git branch -D'
 alias gc='git commit -v'
 alias 'gc!'='git commit -v --amend'
+alias gcb='git checkout -b'
 alias gcf='git config --list'
+alias gco='git checkout'
 alias gcpa='git cherry-pick --abort'
 alias gcpc='git cherry-pick --continue'
 alias gd='git diff'
 alias gds='git diff --staged'
 alias gf='git fetch'
+alias gke='gitk --all $(git log -g --pretty=%h)'
 alias gl='git pull'
+alias glg='git log --stat'
+alias glgg='git log --graph'
+alias glgga='git log --graph --decorate --all'
+alias glgm='git log --graph --max-count=10'
+alias glgp='git log --stat -p'
 alias gll='git pull origin main'
+alias glo='git log --oneline --decorate'
+alias glod='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'\'
+alias glods='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'\'' --date=short'
+alias glog='git log --oneline --decorate --graph'
+alias gloga='git log --oneline --decorate --graph --all'
+alias glol='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'
+alias glola='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'' --all'
+alias glols='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'' --stat'
 alias gm='git merge'
 alias gma='git merge --abort'
 alias gp='git push'
 alias gr='git remote'
 alias gra='git remote add'
-alias grv='git remote -v'
 alias grb='git rebase'
 alias grba='git rebase --abort'
 alias grbc='git rebase --continue'
@@ -52,31 +62,18 @@ alias grev='git revert'
 alias grh='git reset'
 alias grm='git rm'
 alias grrm='git remote remove'
+alias grv='git remote -v'
 alias gsh='git show'
+alias gst='git status'
+alias gunwip='git log -n 1 | grep -q -c "\-\-wip\-\-" && git reset HEAD~1'
 alias l='ls -lah'
 alias ll='ls -lh'
 alias ls='ls --color=tty'
 alias md='mkdir -p'
 alias rd='rmdir -p'
-alias gke='gitk --all $(git log -g --pretty=%h)'
-alias glg='git log --stat'
-alias glgg='git log --graph'
-alias glgga='git log --graph --decorate --all'
-alias glgm='git log --graph --max-count=10'
-alias glgp='git log --stat -p'
-alias glo='git log --oneline --decorate'
-alias glod='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'\'
-alias glods='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'\'' --date=short'
-alias glog='git log --oneline --decorate --graph'
-alias gloga='git log --oneline --decorate --graph --all'
-alias glol='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'
-alias glola='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'' --all'
-alias glols='git log --graph --pretty='\''%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'\'' --stat'
-alias gunwip='git log -n 1 | grep -q -c "\-\-wip\-\-" && git reset HEAD~1'
+alias src='source ~/.bashrc'
 
 grep --help 2>&1 | grep -q excl && alias grep='grep --color=auto --exclude-dir={.bzr,CVS,.git,.hg,.svn,.idea,.tox,.venv,venv}' || alias grep='grep'
-
-echo 'set completion-ignore-case on' > ~/.inputrc
 
 # extract file(s) from compressed status
 extract() {
@@ -150,5 +147,3 @@ End-Of-Usage
 }
 
 alias x=extract
-
-[ -d "$HOME/.diff-so-fancy" ] && export PATH=$PATH:$HOME/.diff-so-fancy && command -v git &>/dev/null && git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
