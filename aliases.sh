@@ -67,3 +67,4 @@ alias mon0='echo "0" | sudo tee /sys/module/wlan/parameters/con_mode'
 alias mon1='echo "4" | sudo tee /sys/module/wlan/parameters/con_mode'
 alias cx="chmod +x"
 alias vm="vim Makefile"
+alias ghc='gh codespace ssh -c solid-space-fortnight-r6qwx9jqg4535g5g'
