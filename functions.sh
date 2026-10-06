@@ -190,20 +190,27 @@ u() {
 
 [ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
 
-lp() {
-    local r="$HOME/bin"
-    [ ! -d "$r" ] && echo "❌ Error: $r missing." && return 1
-    echo "�� Syncing symlinks..."
-    find "$r" -mindepth 2 -maxdepth 2 -type d | while read -r d; do
-        local s="$d"
-        [ -d "$d/bin" ] && s="$d/bin"
-        find "$s" -maxdepth 1 -type f -executable | while read -r e; do
-            local n=$(basename "$e")
-            [ "$n" = "bin" ] && continue
-            ln -sf "$e" "$r/$n"
+lp () {
+        local r="$HOME/bin"
+        [ ! -d "$r" ] && echo "❌ Error: $r missing." && return 1
+
+        find "$r" -maxdepth 1 -type l -xtype l | while read -r broken
+        do
+                rm -f "$broken" && echo "🗑️ Removed: $(basename "$broken")"
         done
-    done
-    echo "✅ Done!"
+
+        find "$r" -mindepth 2 -maxdepth 2 -type d | while read -r d
+        do
+                local s="$d"
+                [ -d "$d/bin" ] && s="$d/bin"
+                find "$s" -maxdepth 1 -type f -executable | while read -r e
+                do
+                        local n=$(basename "$e")
+                        [ "$n" = "bin" ] && continue
+                        ln -sf "$e" "$r/$n" && echo "🔗 Added: $n -> $e"
+                done
+        done
+        echo "✅ Done!"
 }
 
 #Usages
