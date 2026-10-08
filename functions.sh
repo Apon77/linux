@@ -222,7 +222,7 @@ lp() {
         do
                 local s="$d"
                 [ -d "$d/bin" ] && s="$d/bin"
-                find "$s" -maxdepth 1 -type f -executable | while read -r e
+                find "$s" -maxdepth 5 -type f -executable | while read -r e
                 do
                         local n=$(basename "$e")
                         [ "$n" = "bin" ] && continue
