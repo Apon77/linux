@@ -165,6 +165,26 @@ gpp(){
 	git push
 }
 
+ipa() {
+    printf "%-4s %-18s %-18s %-18s
+" "IDX" "INTERFACE" "IP ADDRESS" "MAC ADDRESS"
+    printf "%-4s %-18s %-18s %-18s
+" "---" "---------" "----------" "-----------"
+
+    ip -o link | while read -r line; do
+        id=$(echo "$line" | cut -d: -f1)
+        name=$(echo "$line" | cut -d: -f2 | tr -d ' ')
+        ip=$(ip -o -4 addr show dev "$name" 2>/dev/null | awk '{print $4}')
+        mac=$(ip link show dev "$name" 2>/dev/null | grep -oE '([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}' | head -n 1)
+
+        [ -z "$ip" ] && ip="N/A"
+        [ -z "$mac" ] && mac="N/A"
+
+        printf "%-4s %-18s %-18s %-18s
+" "$id" "$name" "$ip" "$mac"
+    done
+}
+
 iptv(){
 input="$1"
 output=$(basename $1 .m3u8)-filtered.m3u8
