@@ -83,6 +83,10 @@ HISTTIMEFORMAT="%d/%m/%y %T "
 
 [ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
 
+bak () {
+	cp $1 $1.bak -a
+}
+
 cnf(){
 	curl https://command-not-found.com/$1 -s|grep apt
 }
