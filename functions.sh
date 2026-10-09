@@ -126,6 +126,11 @@ dka(){
 	docker start "$1" && docker attach "$1"
 }
 
+gac() {
+  git add --all
+  git commit -m "$*"
+}
+
 unalias gcl 2>/dev/null
 gcl() {
 	if [[ $1 == *"http"* ]]
