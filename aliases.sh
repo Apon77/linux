@@ -59,7 +59,9 @@ alias st2='curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/
 alias t='tmux attach -t0'
 alias t1='tmux attach -t1'
 alias ta='tmux attach -t'
+alias tf='type -f'
 alias tl='tmux ls'
+alias tp='type'
 alias ts='tailscale status'
 alias tx='tmux'
 command -v vim &>/dev/null && alias v=vim || alias v=vi
