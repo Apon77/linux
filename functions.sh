@@ -218,24 +218,41 @@ lp() {
         local r="$HOME/bin"
         [ ! -d "$r" ] && echo "❌ Error: $r missing." && return 1
 
-        find "$r" -maxdepth 1 -type l -xtype l | while read -r broken
-        do
-                rm -f "$broken" && echo "🗑️ Removed: $(basename "$broken")"
-        done
+        # 1. Remove broken symlinks in ~/bin
+        while IFS= read -r broken; do
+                rm -f "$broken" && echo "🗑️  Removed: $(basename "$broken")"
+        done < <(find "$r" -maxdepth 1 -type l -xtype l)
 
-        find "$r" -mindepth 2 -maxdepth 2 -type d | while read -r d
-        do
+        # 2. Scan subdirectories in ~/bin
+        while IFS= read -r d; do
                 local s="$d"
+                # If the dir has a 'bin' subfolder, use that instead
                 [ -d "$d/bin" ] && s="$d/bin"
-                find "$s" -maxdepth 5 -type f -executable | while read -r e
-                do
-                        local n=$(basename "$e")
+
+                # Find executables inside the directory
+                while IFS= read -r e; do
+                        local n
+                        n=$(basename "$e")
+                        
+                        # Skip if it's named 'bin'
                         [ "$n" = "bin" ] && continue
-                        ln -sf "$e" "$r/$n" && echo "🔗 Added: $n -> $e"
-                done
-        done
+
+                        # Create symlink in ~/bin
+                        if ln -sf "$e" "$r/$n"; then
+                                echo "🔗 Added: $n -> $e"
+                        else
+                                echo "❌ Failed to link: $n"
+                        fi
+                done < <(find "$s" -maxdepth 5 -type f -executable)
+
+        done < <(find "$r" -mindepth 1 -maxdepth 1 -type d)
+
         echo "✅ Done!"
 }
+
+
+
+
 
 m(){
 	curl cheat.sh/$1
