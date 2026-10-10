@@ -101,6 +101,24 @@ com(){
 	tar --use-compress-program="pigz -k -${2:-6}" -cf "$1.tar.gz" "$1"
 }
 
+de () {
+    local F="$HOME/electricity_log.txt" TMP="$F.tmp" live_data
+    live_data=$(curl "$desco_url/getCustomerDailyConsumption?accountNo=$desco_accountno&dateFrom=$(date -d '40 days ago' +%Y-%m-%d)&dateTo=$(date +%Y-%m-%d)" -ks | jq -r '.data | sort_by(.date) | ["Date", "Diff Taka (৳)", "Diff Unit (kWh)", "Taka/Unit"], (range(1; length) as $i | (if .[$i].date | endswith("-01") then (.[$i].consumedTaka * 100 | round / 100) else ((.[$i].consumedTaka - .[$i-1].consumedTaka) * 100 | round / 100) end) as $taka | ((.[$i].consumedUnit - .[$i-1].consumedUnit) * 1000 | round / 1000) as $unit | [.[$i].date, $taka, $unit, (if $unit == 0 then 0 else (($taka / $unit) * 100 | round / 100) end)]) | @tsv')
+    [ -f "$F" ] || echo "$live_data" | head -n 1 > "$F"
+    { head -n 1 "$F"; { tail -n +2 "$F" 2>/dev/null; echo "$live_data" | tail -n +2; } | sort -k1,1 -u; } > "$TMP" && mv "$TMP" "$F"
+    column -t -s $'\t' < "$F"
+}
+
+deb () {
+    local F="$HOME/balance_log.txt"
+    local raw_data
+    raw_data=$(curl "$desco_url/getBalance?accountNo=$desco_accountno" -ks | jq -r '.data | "\(.readingTime)\t\(.balance)"')
+    [ -z "$raw_data" ] || [ "$raw_data" = "null null" ] && { echo "Error: No data" >&2; return 1; }
+    [ -f "$F" ] || echo -e "Reading Time\tBalance" > "$F"
+    grep -Fxq "$raw_data" "$F" || echo "$raw_data" >> "$F"
+    column -t -s $'\t' < "$F"
+}
+
 decom() {
 	if [[ -z "$1" ]]; then
 		echo "Usage: decom <filename.tar.gz> [destination_path]"
@@ -120,6 +138,10 @@ deldog() {
     }
     KEY=$(printf  "%s\n" "${RESULT}" | cut -d '"' -f6)
     echo "https://del.dog/${KEY}"
+}
+
+der(){
+        curl "$desco_url/getRechargeHistory?accountNo=$desco_accountno&dateFrom=$(date -d '360 days ago' +%Y-%m-%d)&dateTo=$(date +%Y-%m-%d)" -ks | jq -r '["Date & Time", "Total Amount", "Energy Amount"], (.data |= sort_by(.rechargeDate) | .data[] | [.rechargeDate, .totalAmount, .energyAmount]) | @tsv' | column -t -s $'\t'
 }
 
 dka(){
