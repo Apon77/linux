@@ -15,13 +15,15 @@ git clone --recurse-submodules https://github.com/so-fancy/diff-so-fancy $HOME/.
 sed -i 's/plugins=(git)/plugins=(git z command-not-found extract zsh-autosuggestions history-substring-search zsh-syntax-highlighting)/g' ~/.zshrc
 #sed -i 's/robbyrussell/powerlevel10k\/powerlevel10k/g' ~/.zshrc
 
-curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/linux/easy.zsh
-curl https://raw.githubusercontent.com/Apon77/linux/junk/functions.sh > ~/linux/functions.sh
-curl https://raw.githubusercontent.com/Apon77/linux/junk/aliases.sh > ~/linux/aliases.sh
+#curl https://raw.githubusercontent.com/Apon77/linux/junk/easy.zsh > ~/linux/easy.zsh
+#curl https://raw.githubusercontent.com/Apon77/linux/junk/functions.sh > ~/linux/functions.sh
+#curl https://raw.githubusercontent.com/Apon77/linux/junk/aliases.sh > ~/linux/aliases.sh
+#curl https://raw.githubusercontent.com/Apon77/linux/refs/heads/junk/others/gai > ~/linux/others/gai
 
 ln -sf ~/linux/easy.zsh ~/.oh-my-zsh/custom/easy.zsh
 ln -sf ~/linux/functions.sh ~/.oh-my-zsh/custom/functions.zsh
 ln -sf ~/linux/aliases.sh ~/.oh-my-zsh/custom/aliases.zsh
+ln -sf ~/linux/others/gai ~/bin/gai
 
 #vim ~/.zshrc
 #ZSH_THEME="powerlevel10k/powerlevel10k"

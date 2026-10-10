@@ -1,0 +1,109 @@
+#!/bin/bash
+GEMINI_KEY="${GEMINI_API_KEY}" GROQ_KEY="${GROQ_API_KEY}"
+GEMINI_MODEL="gemini-3.5-flash-lite" GROQ_MODEL="qwen/qwen3.8-27b"
+HIST_G="$HOME/.gemini_id.txt" HIST_Q="$HOME/.groq_history.json"
+LOG_DIR="." LOG_G_TXT="ai_chat_history.txt" LOG_Q_TXT="groq_chat_history.txt"
+GREEN='\033[0;32m' RED='\033[0;31m' NC='\033[0m'
+
+show_help(){ echo -e "Usage: $0 [ai|groq] [-c|--continue] [-m|--model MODEL] [-h|--help] [FILE|PROMPT]\nBackend defaults to 'groq' if omitted.\nBackends:\n - ai: Gemini (Key: GEMINI_API_KEY)\n - groq: Groq (Key: GROQ_API_KEY)\nOptions:\n -m, --model: Override default Groq model\n   - 120: Uses openai/gpt-oss-120b\n   - 20: Uses openai/gpt-oss-20b\n   - <anything else>: Uses the specified model"; exit 0; }
+
+spinner(){ pid=$1 d=0.1 f=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏') s=$SECONDS; while kill -0 "$pid" 2>/dev/null; do for r in "${f[@]}"; do printf "\rThinking %s %ds" "$r" "$((SECONDS-s))"; sleep $d; kill -0 "$pid" 2>/dev/null || break; done; done; printf "\r\033[K"; }
+
+[[ "$1" =~ ^(-h|--help)$ ]] && show_help
+BACKEND="groq"
+CONTINUE=false
+CUSTOM_MODEL=""
+PROMPT=""
+LOG_DIR="."
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    ai) BACKEND="ai"; shift ;;
+    groq) BACKEND="groq"; shift ;;
+    -c|--continue) CONTINUE=true; shift ;;
+    -m|--model) [[ -z "$2" ]] && { echo -e "${RED}Error: --model requires value${NC}"; exit 1; }; CUSTOM_MODEL="$2"; shift 2 ;;
+    -h|--help) show_help ;;
+    *)
+      if [[ -f "$1" ]] && [[ -z "$PROMPT" ]]; then PROMPT=$(<"$1"); LOG_DIR=$(dirname "$1"); shift;
+      elif [[ -z "$PROMPT" ]]; then PROMPT="$*"; shift; break;
+      else break; fi
+      ;;
+  esac
+done
+
+if [ -z "$PROMPT" ] && [ -f "./prompt.txt" ]; then PROMPT=$(<"./prompt.txt"); LOG_DIR="."; fi
+
+# Logic to determine the actual model to use if --model was passed
+if [[ -n "$CUSTOM_MODEL" ]]; then
+    if [[ "$CUSTOM_MODEL" == "120" ]]; then
+        GROQ_MODEL="openai/gpt-oss-120b"
+    elif [[ "$CUSTOM_MODEL" == "20" ]]; then
+        GROQ_MODEL="openai/gpt-oss-20b"
+    else
+        GROQ_MODEL="$CUSTOM_MODEL"
+    fi
+fi
+
+[ -z "$PROMPT" ] && { echo -e "${RED}Error: Empty prompt${NC}"; exit 1; }
+
+TMP=$(mktemp); trap 'rm -f "$TMP"' EXIT
+
+if [ "$BACKEND" = "ai" ]; then
+  [[ -z "$GEMINI_KEY" ]] && { echo -e "${RED}Error: GEMINI_API_KEY not set${NC}"; exit 1; }
+  PREV_ID=$([ "$CONTINUE" = true ] && tr -d '\r\n[:space:]' <"$HIST_G" 2>/dev/null || echo "")
+  [ "$CONTINUE" = false ] && rm -f "$HIST_G"
+  if [ -n "$PREV_ID" ]; then
+    PAYLOAD=$(jq -n --arg m "$GEMINI_MODEL" --arg i "$PROMPT" --arg p "$PREV_ID" '{model:$m,input:$i,previous_interaction_id:$p}')
+  else
+    PAYLOAD=$(jq -n --arg m "$GEMINI_MODEL" --arg i "$PROMPT" '{model:$m,input:$i}')
+  fi
+  (curl -s "https://generativelanguage.googleapis.com/v1beta/interactions" \
+    -H "Content-Type: application/json" -H "x-goog-api-key: $GEMINI_KEY" -H "Api-Revision: 2026-05-20" \
+    -X POST -d "$PAYLOAD" >"$TMP") &
+  CURL_PID=$!; spinner $CURL_PID; wait $CURL_PID
+  RESP=$(<"$TMP")
+  NEW_ID=$(echo "$RESP"|jq -r '.id // empty')
+  [ -n "$NEW_ID" ] && echo "$NEW_ID" >"$HIST_G"
+  TEXT=$(echo "$RESP"|jq -r '.steps[]? | select(.type=="model_output") | .content[]? | .text' 2>/dev/null | tr -d '\0')
+  if [ -n "$TEXT" ] && [ "$TEXT" != "null" ]; then
+    echo -e "${GREEN}${TEXT}${NC}"
+    {
+      printf "You: %s\n\n" "$PROMPT"
+      printf "AI: %s\n\n" "$TEXT"
+      echo "----------------------------------------"; echo ""
+    } >>"${LOG_DIR}/$LOG_G_TXT"
+  else
+    echo -e "${RED}❌ Gemini API Error:${NC}"
+    echo "$RESP"; exit 1
+  fi
+else
+  [[ -z "$GROQ_KEY" ]] && { echo -e "${RED}Error: GROQ_API_KEY not set${NC}"; exit 1; }
+  USER_MSG=$(jq -n --arg c "$PROMPT" '{role:"user",content:$c}')
+  if [ "$CONTINUE" = true ] && [ -f "$HIST_Q" ]; then
+    MSGS=$(jq --argjson n "$USER_MSG" '. + [$n]' "$HIST_Q")
+  else
+    MSGS=$(jq -n --argjson n "$USER_MSG" '[$n]')
+  fi
+  PAYLOAD=$(jq -n --arg m "$GROQ_MODEL" --argjson msgs "$MSGS" '{model:$m,messages:$msgs}')
+  (curl -s "https://api.groq.com/openai/v1/chat/completions" \
+    -H "Authorization: Bearer $GROQ_KEY" -H "Content-Type: application/json" \
+    -X POST -d "$PAYLOAD" >"$TMP") &
+  CURL_PID=$!; spinner $CURL_PID; wait $CURL_PID
+  RESP=$(<"$TMP")
+  REPLY=$(echo "$RESP"|jq -r '.choices[0].message.content // empty')
+  if [ -n "$REPLY" ] && [ "$REPLY" != "null" ]; then
+    echo "$REPLY"
+    TS=$(date "+%Y-%m-%d %H:%M:%S")
+    {
+      echo "=================================================="
+      echo "[$TS] USER:"; echo "$PROMPT"; echo ""; echo "[$TS] GROQ:"; echo "$REPLY"
+      echo "=================================================="; echo ""
+    } >>"./$LOG_Q_TXT"
+    ASSISTANT_MSG=$(jq -n --arg c "$REPLY" '{role:"assistant",content:$c}')
+    UPDATED=$(echo "$MSGS"|jq --argjson a "$ASSISTANT_MSG" '. + [$a]')
+    echo "$UPDATED" >"$HIST_Q"
+  else
+    echo -e "${RED}❌ Groq API Error:${NC}"
+    echo "$RESP"; exit 1
+  fi
+fi
