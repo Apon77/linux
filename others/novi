@@ -5,12 +5,14 @@ FILE="$1"; touch "$FILE"
 DIR=$(dirname "$FILE")
 BUF="$DIR/.$$.novi_buffer.tmp"
 INS="$DIR/.$$.novi_insert.tmp"
+CLIP="$DIR/.$$.novi_clip.tmp"
 cat "$FILE" > "$BUF"
+touch "$CLIP"
 
 restore_term() {
     stty icanon echo
     printf "\033[?25h\033[2J\033[H"
-    rm -f "$BUF" "$INS" "$BUF.tmp"
+    rm -f "$BUF" "$INS" "$CLIP" "$BUF.tmp"
 }
 trap restore_term EXIT INT TERM
 
@@ -48,23 +50,21 @@ while :; do
     if [ -n "$MSG" ]; then
         printf "\033[K%s\n" "$MSG"; MSG=""
     elif [ "$HELP" -eq 1 ]; then
-        printf "\033[K[Help: j/k=Move f/b=Page gg/G=Jump i/I=Insert dd=Del w=Save q=Quit x=Exit]\n"
+        printf "\033[K[Help: j/k=Move f/b=Page gg/G=Jump i/I=Insert dd=Del y=Copy p=Paste w=Save q=Quit]\n"
     else
         printf "\033[KFile: %s | Line: %d/%d (h for help)\n" "$FILE" "$CUR" "$TOT"
     fi
 
     printf "\033[K:%s\033[?25h" "$KBUF"
 
-    # --- NATIVE PORTABLE INPUT ENGINE ---
+    # --- INPUT PHASE ---
     CNT=""
     CMD=""
     while :; do
         stty -icanon -echo
-        # Native shell read captures instantly and stops layout shifting
         C=$(head -c 1 2>/dev/null)
         stty icanon echo
         
-        # If C is completely blank, an actual Enter key was registered!
         if [ -z "$C" ]; then
             CMD="ENTER"
             break
@@ -88,9 +88,7 @@ while :; do
 
     case "$CMD" in
         ENTER)
-            if [ -n "$NV" ]; then
-                CUR="$NV"
-            fi
+            if [ -n "$NV" ]; then CUR="$NV"; fi
             ;;
         h) HELP=$((1 - HELP)) ;;
         j) CUR=$((CUR + CNT)) ;;
@@ -98,16 +96,25 @@ while :; do
         f) CUR=$((CUR + WIN * CNT)) ;;
         b) CUR=$((CUR - WIN * CNT)) ;;
         g)
-            stty -icanon -echo
-            NX=$(head -c 1 2>/dev/null)
-            stty icanon echo
-            if [ "$NX" = "g" ]; then
-                CUR="${NV:-1}"
-            else
-                MSG="Unknown action: g${NX}"
-            fi
+            stty -icanon -echo; NX=$(head -c 1 2>/dev/null); stty icanon echo
+            [ "$NX" = "g" ] && CUR="${NV:-1}"
             ;;
         G) CUR="${NV:-$TOT}" ;;
+        y)
+            # Yank/Copy Line(s) to temporary clipboard file
+            if [ "$TOT" -gt 0 ]; then
+                END_YANK=$((CUR + CNT - 1))
+                awk -v s="$CUR" -v e="$END_YANK" 'NR>=s && NR<=e' "$BUF" > "$CLIP"
+                MSG="Yanked $CNT line(s) to clipboard."
+            fi
+            ;;
+        p)
+            # Paste/Put Clipboard file below current cursor line
+            if [ -s "$CLIP" ]; then
+                sed -i "${CUR}r $CLIP" "$BUF"
+                MSG="Pasted block below line $CUR."
+            fi
+            ;;
         i|I)
             mode="AFTER"; [ "$CMD" = "I" ] && mode="BEFORE"
             printf "\033[2J\033[H-- INSERT %s LINE %d --\n(Type block, press Enter then Ctrl+D to finish)\n" "$mode" "$CUR"
@@ -127,17 +134,17 @@ while :; do
             rm -f "$INS"; printf "\033[2J"
             ;;
         d)
-            stty -icanon -echo
-            NX=$(head -c 1 2>/dev/null)
-            stty icanon echo
+            stty -icanon -echo; NX=$(head -c 1 2>/dev/null); stty icanon echo
             if [ "$NX" = "d" ] && [ "$TOT" -gt 0 ]; then
-                sed -i "${CUR},$((CUR + CNT - 1))d" "$BUF"
+                END_DEL=$((CUR + CNT - 1))
+                # Save to clipboard first before deleting (acts as a 'Cut')
+                awk -v s="$CUR" -v e="$END_DEL" 'NR>=s && NR<=e' "$BUF" > "$CLIP"
+                sed -i "${CUR},${END_DEL}d" "$BUF"
             fi
             ;;
         w) cat "$BUF" > "$FILE"; MSG="\"$FILE\" written to disk." ;;
         q) break ;;
         x) cat "$BUF" > "$FILE"; break ;;
-        *) [ -n "$CMD" ] && MSG="Unknown action: ${KBUF}" ;;
     esac
 
     KBUF=""
