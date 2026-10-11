@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+FILE="${1:-}"
+
+if [ -z "$FILE" ]; then
+    echo "Usage: novi <filename>"
+    exit 1
+fi
+
+# Ensure the file exists right away
+touch "$FILE"
+
+while true; do
+    echo "========================================"
+    echo " File: $FILE"
+    echo "========================================"
+    
+    # Check if file has content safely
+    if [ -s "$FILE" ]; then
+        perl -pe 'print "$.: "' "$FILE"
+    else
+        echo "(file is empty)"
+    fi
+    
+    echo "========================================"
+    echo " [a] Append line    [i] Insert at line    [d] Delete line    [q] Quit"
+    echo -n "Choose an option: "
+    read -r OPTION
+    
+    case "$OPTION" in
+        a|A)
+            echo "Enter text to append (Press Enter when done):"
+            read -r TEXT
+            echo "$TEXT" >> "$FILE"
+            ;;
+        i|I)
+            echo -n "Insert before which line number? "
+            read -r LINE_NUM
+            echo "Enter text to insert:"
+            read -r TEXT
+            perl -ni -e "print \"$TEXT\n\" if \$. == $LINE_NUM; print;" "$FILE"
+            ;;
+        d|D)
+            echo -n "Enter line number to delete: "
+            read -r LINE_NUM
+            perl -ni -e "print unless \$. == $LINE_NUM" "$FILE"
+            ;;
+        q|Q)
+            echo "File saved."
+            break
+            ;;
+        *)
+            echo "Invalid option!"
+            ;;
+    esac
+done
