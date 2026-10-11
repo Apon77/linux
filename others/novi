@@ -8,18 +8,13 @@ fi
 
 touch "$FILE"
 
-# Extract the directory of the target file
 DIR=$(dirname "$FILE")
-
-# Create a hidden buffer file inside the same directory
 BUFFER="$DIR/.$$.novi_buffer.tmp"
 cat "$FILE" > "$BUFFER"
 
-# Setup local temporary files for insertions
 INSERT_TMP="$DIR/.$$.novi_insert.tmp"
 OUT_TMP="$DIR/.$$.novi_out.tmp"
 
-# Clean up all hidden local files on exit
 restore_term() {
     stty icanon echo
     rm -f "$BUFFER" "$INSERT_TMP" "$OUT_TMP"
@@ -51,25 +46,48 @@ while true; do
     
     echo "========================================================="
     echo " Nav:  [j] Down 20   [k] Up 20     [G] Jump to Line"
-    echo " Keys: [i] Append    [I] Insert    [dd] Delete    [s] Search"
+    echo " Keys: [i] Append    [I] Insert    [5dd] Delete X Lines  [s] Search"
     echo " Exit: [w] Save      [q] Quit      [x] Save & Exit"
     echo "========================================================="
     echo -n ":"
     
-    stty -icanon -echo
-    CMD=$(dd bs=1 count=1 2>/dev/null)
-    stty icanon echo
+    # Initialize count tracking
+    COUNT=""
+    
+    # Accumulator loop for processing leading numbers (e.g., 5dd)
+    while true; do
+        stty -icanon -echo
+        CHAR=$(dd bs=1 count=1 2>/dev/null)
+        stty icanon echo
+        
+        case "$CHAR" in
+            [0-9])
+                COUNT="${COUNT}${CHAR}"
+                echo -n "$CHAR"
+                ;;
+            *)
+                CMD="$CHAR"
+                break
+                ;;
+        esac
+    done
+
+    # Default count to 1 if no number was typed
+    [ -z "$COUNT" ] && COUNT=1
 
     case "$CMD" in
         j)
-            START_LINE=$((START_LINE + WINDOW_SIZE))
+            # Apply scrolling multiplier based on the number pressed
+            SCROLL_AMT=$((WINDOW_SIZE * COUNT))
+            START_LINE=$((START_LINE + SCROLL_AMT))
             if [ "$START_LINE" -gt "$TOTAL_LINES" ]; then
                 START_LINE=$((TOTAL_LINES - WINDOW_SIZE + 1))
             fi
             [ "$START_LINE" -lt 1 ] && START_LINE=1
             ;;
         k)
-            START_LINE=$((START_LINE - WINDOW_SIZE))
+            SCROLL_AMT=$((WINDOW_SIZE * COUNT))
+            START_LINE=$((START_LINE - SCROLL_AMT))
             [ "$START_LINE" -lt 1 ] && START_LINE=1
             ;;
         G)
@@ -116,15 +134,20 @@ while true; do
             fi
             ;;
         d)
+            # Check for second 'd' to match 'dd'
             stty -icanon -echo
             NEXT_CHAR=$(dd bs=1 count=1 2>/dev/null)
             stty icanon echo
+            
             if [ "$NEXT_CHAR" = "d" ]; then
                 echo ""
-                echo -n "Delete which line number? "
+                echo -n "Delete starting at which line number? "
                 read LINE_NUM
+                
                 if [ -n "$LINE_NUM" ]; then
-                    sed -i "${LINE_NUM}d" "$BUFFER"
+                    # Calculate end range based on the count requested
+                    END_DEL=$((LINE_NUM + COUNT - 1))
+                    sed -i "${LINE_NUM},${END_DEL}d" "$BUFFER"
                 fi
             fi
             ;;
