@@ -1,56 +1,150 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-FILE="${1:-}"
-
+FILE="$1"
 if [ -z "$FILE" ]; then
-    echo "Usage: novi <filename>"
+    echo "Usage: $0 <filename>"
     exit 1
 fi
 
-# Ensure the file exists right away
 touch "$FILE"
 
+# Extract the directory of the target file
+DIR=$(dirname "$FILE")
+
+# Create a hidden buffer file inside the same directory
+BUFFER="$DIR/.$$.novi_buffer.tmp"
+cat "$FILE" > "$BUFFER"
+
+# Setup local temporary files for insertions
+INSERT_TMP="$DIR/.$$.novi_insert.tmp"
+OUT_TMP="$DIR/.$$.novi_out.tmp"
+
+# Clean up all hidden local files on exit
+restore_term() {
+    stty icanon echo
+    rm -f "$BUFFER" "$INSERT_TMP" "$OUT_TMP"
+}
+trap restore_term EXIT INT TERM
+
+START_LINE=1
+WINDOW_SIZE=20
+
 while true; do
-    echo "========================================"
-    echo " File: $FILE"
-    echo "========================================"
+    TOTAL_LINES=$(awk 'END {print NR}' "$BUFFER")
+    [ -z "$TOTAL_LINES" ] && TOTAL_LINES=0
     
-    # Check if file has content safely
-    if [ -s "$FILE" ]; then
-        perl -pe 'print "$.: "' "$FILE"
+    END_LINE=$((START_LINE + WINDOW_SIZE - 1))
+    if [ "$END_LINE" -gt "$TOTAL_LINES" ]; then
+        END_LINE=$TOTAL_LINES
+    fi
+
+    clear
+    echo "========================================================="
+    echo " File: $FILE | Lines: $START_LINE-$END_LINE of $TOTAL_LINES (novi Mode)"
+    echo "========================================================="
+    
+    if [ "$TOTAL_LINES" -gt 0 ]; then
+        awk -v start="$START_LINE" -v end="$END_LINE" 'NR>=start && NR<=end {print NR ": " $0}' "$BUFFER"
     else
         echo "(file is empty)"
     fi
     
-    echo "========================================"
-    echo " [a] Append line    [i] Insert at line    [d] Delete line    [q] Quit"
-    echo -n "Choose an option: "
-    read -r OPTION
+    echo "========================================================="
+    echo " Nav:  [j] Down 20   [k] Up 20     [G] Jump to Line"
+    echo " Keys: [i] Append    [I] Insert    [dd] Delete    [s] Search"
+    echo " Exit: [w] Save      [q] Quit      [x] Save & Exit"
+    echo "========================================================="
+    echo -n ":"
     
-    case "$OPTION" in
-        a|A)
-            echo "Enter text to append (Press Enter when done):"
-            read -r TEXT
-            echo "$TEXT" >> "$FILE"
+    stty -icanon -echo
+    CMD=$(dd bs=1 count=1 2>/dev/null)
+    stty icanon echo
+
+    case "$CMD" in
+        j)
+            START_LINE=$((START_LINE + WINDOW_SIZE))
+            if [ "$START_LINE" -gt "$TOTAL_LINES" ]; then
+                START_LINE=$((TOTAL_LINES - WINDOW_SIZE + 1))
+            fi
+            [ "$START_LINE" -lt 1 ] && START_LINE=1
             ;;
-        i|I)
+        k)
+            START_LINE=$((START_LINE - WINDOW_SIZE))
+            [ "$START_LINE" -lt 1 ] && START_LINE=1
+            ;;
+        G)
+            echo -n "Jump to which line number? "
+            read JUMP_LINE
+            if [ -n "$JUMP_LINE" ] && [ "$JUMP_LINE" -le "$TOTAL_LINES" ] && [ "$JUMP_LINE" -gt 0 ]; then
+                START_LINE=$JUMP_LINE
+            fi
+            ;;
+        s)
+            echo -n "Enter search term: "
+            read TERM
+            if [ -n "$TERM" ]; then
+                echo "--- Search Results ---"
+                awk -v pat="$TERM" '$0 ~ pat {print "Line " NR ": " $0}' "$BUFFER"
+                echo "----------------------"
+                echo -n "Press Enter to return..."
+                read _
+            fi
+            ;;
+        i)
+            echo ""
+            echo "-- INSERT MODE (Type block, press Enter then Ctrl+D to finish) --"
+            cat >> "$BUFFER"
+            ;;
+        I)
+            echo ""
             echo -n "Insert before which line number? "
-            read -r LINE_NUM
-            echo "Enter text to insert:"
-            read -r TEXT
-            perl -ni -e "print \"$TEXT\n\" if \$. == $LINE_NUM; print;" "$FILE"
+            read LINE_NUM
+            if [ -n "$LINE_NUM" ]; then
+                echo "-- INSERT MODE (Before line $LINE_NUM, Enter then Ctrl+D to finish) --"
+                cat > "$INSERT_TMP"
+                if [ -s "$INSERT_TMP" ]; then
+                    if [ "$LINE_NUM" -le 1 ]; then
+                        cat "$INSERT_TMP" "$BUFFER" > "$OUT_TMP"
+                        mv "$OUT_TMP" "$BUFFER"
+                    else
+                        TARGET_LINE=$((LINE_NUM - 1))
+                        sed -i "${TARGET_LINE}r $INSERT_TMP" "$BUFFER"
+                    fi
+                    rm -f "$INSERT_TMP" "$OUT_TMP"
+                    START_LINE=$LINE_NUM
+                fi
+            fi
             ;;
-        d|D)
-            echo -n "Enter line number to delete: "
-            read -r LINE_NUM
-            perl -ni -e "print unless \$. == $LINE_NUM" "$FILE"
+        d)
+            stty -icanon -echo
+            NEXT_CHAR=$(dd bs=1 count=1 2>/dev/null)
+            stty icanon echo
+            if [ "$NEXT_CHAR" = "d" ]; then
+                echo ""
+                echo -n "Delete which line number? "
+                read LINE_NUM
+                if [ -n "$LINE_NUM" ]; then
+                    sed -i "${LINE_NUM}d" "$BUFFER"
+                fi
+            fi
             ;;
-        q|Q)
-            echo "File saved."
+        w)
+            cat "$BUFFER" > "$FILE"
+            echo ""
+            echo "\"$FILE\" written to disk."
+            sleep 1
+            ;;
+        q)
+            echo ""
+            echo "Discarding unsaved changes."
             break
             ;;
-        *)
-            echo "Invalid option!"
+        x)
+            cat "$BUFFER" > "$FILE"
+            echo ""
+            echo "\"$FILE\" saved."
+            break
             ;;
     esac
 done
+
