@@ -21,13 +21,24 @@ restore_term() {
 }
 trap restore_term EXIT INT TERM
 
-START_LINE=1
+# Track the current active line across the whole file
+CURSOR=1
 WINDOW_SIZE=20
 
 while true; do
     TOTAL_LINES=$(awk 'END {print NR}' "$BUFFER")
     [ -z "$TOTAL_LINES" ] && TOTAL_LINES=0
     
+    # Ensure cursor stays inside boundaries
+    if [ "$CURSOR" -gt "$TOTAL_LINES" ]; then
+        CURSOR=$TOTAL_LINES
+    fi
+    if [ "$CURSOR" -lt 1 ]; then
+        CURSOR=1
+    fi
+
+    # Dynamically calculate the window around the cursor
+    START_LINE=$(( ((CURSOR - 1) / WINDOW_SIZE) * WINDOW_SIZE + 1 ))
     END_LINE=$((START_LINE + WINDOW_SIZE - 1))
     if [ "$END_LINE" -gt "$TOTAL_LINES" ]; then
         END_LINE=$TOTAL_LINES
@@ -35,24 +46,28 @@ while true; do
 
     clear
     echo "========================================================="
-    echo " File: $FILE | Lines: $START_LINE-$END_LINE of $TOTAL_LINES (novi Mode)"
+    echo " File: $FILE | Line: $CURSOR/$TOTAL_LINES (novi Mode)"
     echo "========================================================="
     
     if [ "$TOTAL_LINES" -gt 0 ]; then
-        awk -v start="$START_LINE" -v end="$END_LINE" 'NR>=start && NR<=end {print NR ": " $0}' "$BUFFER"
+        # Print lines and place a '>' visual anchor at the cursor line
+        awk -v start="$START_LINE" -v end="$END_LINE" -v cur="$CURSOR" '
+        NR>=start && NR<=end {
+            prefix = (NR == cur) ? "> " : "  ";
+            print prefix NR ": " $0;
+        }' "$BUFFER"
     else
-        echo "(file is empty)"
+        echo "  (file is empty)"
     fi
     
     echo "========================================================="
-    echo " Nav:  [j] Down 20   [k] Up 20     [50gg] Jump to Line"
-    echo " Keys: [i] Append    [I] Insert    [5dd] Delete X Lines  [s] Search"
-    echo " Exit: [w] Save      [q] Quit      [x] Save & Exit"
+    echo " Nav:  [j/k] Move Up/Down   [f/b] Page Down/Up   [50gg] Go to Line"
+    echo " Keys: [i] Insert After     [I] Insert Before    [5dd] Delete Lines"
+    echo " Exit: [w] Save             [q] Quit             [x] Save & Exit"
     echo "========================================================="
     echo -n ":"
     
     COUNT=""
-    
     while true; do
         stty -icanon -echo
         CHAR=$(dd bs=1 count=1 2>/dev/null)
@@ -70,94 +85,70 @@ while true; do
         esac
     done
 
-    # If a number was typed but no multiplier is needed for standard keys, we preserve the count
     NUM_VAL="$COUNT"
     [ -z "$COUNT" ] && COUNT=1
 
     case "$CMD" in
+        j)
+            # Move cursor down 1 line (multiplied by count if provided)
+            CURSOR=$((CURSOR + COUNT))
+            ;;
+        k)
+            # Move cursor up 1 line (multiplied by count if provided)
+            CURSOR=$((CURSOR - COUNT))
+            ;;
+        f)
+            # Page down
+            CURSOR=$((CURSOR + (WINDOW_SIZE * COUNT)))
+            ;;
+        b)
+            # Page up
+            CURSOR=$((CURSOR - (WINDOW_SIZE * COUNT)))
+            ;;
         g)
-            # Catch the second 'g' for a true 'gg' sequence
             stty -icanon -echo
             NEXT_CHAR=$(dd bs=1 count=1 2>/dev/null)
             stty icanon echo
             
             if [ "$NEXT_CHAR" = "g" ]; then
-                # If a number was provided (e.g., 50gg), jump to that line.
-                # If no number was provided (just gg), default to line 1.
                 if [ -n "$NUM_VAL" ]; then
-                    TARGET_JUMP="$NUM_VAL"
+                    CURSOR="$NUM_VAL"
                 else
-                    TARGET_JUMP=1
-                fi
-                
-                if [ "$TARGET_JUMP" -le "$TOTAL_LINES" ] && [ "$TARGET_JUMP" -gt 0 ]; then
-                    START_LINE="$TARGET_JUMP"
-                else
-                    # Fallback to the last line if the typed line number is way out of bounds
-                    START_LINE="$TOTAL_LINES"
+                    CURSOR=1
                 fi
             fi
             ;;
         G)
-            # Capital G fallback: If a number was typed (e.g., 50G), jump there.
-            # If just 'G', jump to the absolute bottom of the file.
             if [ -n "$NUM_VAL" ]; then
-                TARGET_JUMP="$NUM_VAL"
+                CURSOR="$NUM_VAL"
             else
-                TARGET_JUMP="$TOTAL_LINES"
-            fi
-            
-            if [ "$TARGET_JUMP" -le "$TOTAL_LINES" ] && [ "$TARGET_JUMP" -gt 0 ]; then
-                START_LINE="$TARGET_JUMP"
-            fi
-            ;;
-        j)
-            SCROLL_AMT=$((WINDOW_SIZE * COUNT))
-            START_LINE=$((START_LINE + SCROLL_AMT))
-            if [ "$START_LINE" -gt "$TOTAL_LINES" ]; then
-                START_LINE=$((TOTAL_LINES - WINDOW_SIZE + 1))
-            fi
-            [ "$START_LINE" -lt 1 ] && START_LINE=1
-            ;;
-        k)
-            SCROLL_AMT=$((WINDOW_SIZE * COUNT))
-            START_LINE=$((START_LINE - SCROLL_AMT))
-            [ "$START_LINE" -lt 1 ] && START_LINE=1
-            ;;
-        s)
-            echo -n "Enter search term: "
-            read TERM
-            if [ -n "$TERM" ]; then
-                echo "--- Search Results ---"
-                awk -v pat="$TERM" '$0 ~ pat {print "Line " NR ": " $0}' "$BUFFER"
-                echo "----------------------"
-                echo -n "Press Enter to return..."
-                read _
+                CURSOR="$TOTAL_LINES"
             fi
             ;;
         i)
             echo ""
-            echo "-- INSERT MODE (Type block, press Enter then Ctrl+D to finish) --"
-            cat >> "$BUFFER"
+            echo "-- INSERT MODE (Append AFTER current line $CURSOR, Enter then Ctrl+D) --"
+            cat > "$INSERT_TMP"
+            if [ -s "$INSERT_TMP" ]; then
+                sed -i "${CURSOR}r $INSERT_TMP" "$BUFFER"
+                rm -f "$INSERT_TMP"
+                # Move cursor to the start of your newly added block
+                CURSOR=$((CURSOR + 1))
+            fi
             ;;
         I)
             echo ""
-            echo -n "Insert before which line number? "
-            read LINE_NUM
-            if [ -n "$LINE_NUM" ]; then
-                echo "-- INSERT MODE (Before line $LINE_NUM, Enter then Ctrl+D to finish) --"
-                cat > "$INSERT_TMP"
-                if [ -s "$INSERT_TMP" ]; then
-                    if [ "$LINE_NUM" -le 1 ]; then
-                        cat "$INSERT_TMP" "$BUFFER" > "$OUT_TMP"
-                        mv "$OUT_TMP" "$BUFFER"
-                    else
-                        TARGET_LINE=$((LINE_NUM - 1))
-                        sed -i "${TARGET_LINE}r $INSERT_TMP" "$BUFFER"
-                    fi
-                    rm -f "$INSERT_TMP" "$OUT_TMP"
-                    START_LINE=$LINE_NUM
+            echo "-- INSERT MODE (Insert BEFORE current line $CURSOR, Enter then Ctrl+D) --"
+            cat > "$INSERT_TMP"
+            if [ -s "$INSERT_TMP" ]; then
+                if [ "$CURSOR" -le 1 ]; then
+                    cat "$INSERT_TMP" "$BUFFER" > "$OUT_TMP"
+                    mv "$OUT_TMP" "$BUFFER"
+                else
+                    TARGET_LINE=$((CURSOR - 1))
+                    sed -i "${TARGET_LINE}r $INSERT_TMP" "$BUFFER"
                 fi
+                rm -f "$INSERT_TMP" "$OUT_TMP"
             fi
             ;;
         d)
@@ -166,13 +157,9 @@ while true; do
             stty icanon echo
             
             if [ "$NEXT_CHAR" = "d" ]; then
-                echo ""
-                echo -n "Delete starting at which line number? "
-                read LINE_NUM
-                
-                if [ -n "$LINE_NUM" ]; then
-                    END_DEL=$((LINE_NUM + COUNT - 1))
-                    sed -i "${LINE_NUM},${END_DEL}d" "$BUFFER"
+                if [ "$TOTAL_LINES" -gt 0 ]; then
+                    END_DEL=$((CURSOR + COUNT - 1))
+                    sed -i "${CURSOR},${END_DEL}d" "$BUFFER"
                 fi
             fi
             ;;
