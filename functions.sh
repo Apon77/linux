@@ -148,7 +148,15 @@ dka(){
 	docker start "$1" && docker attach "$1"
 }
 
-gac() {
+dus(){
+  if [ $# -eq 0 ]; then
+    du -sh * | sort -h
+  else
+    du -sh "$@" | sort -h
+  fi
+}
+
+gac(){
   git add --all
   git commit -m "$*"
 }
