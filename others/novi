@@ -1,185 +1,145 @@
 #!/bin/sh
-
-FILE="$1"
-if [ -z "$FILE" ]; then
-    echo "Usage: $0 <filename>"
-    exit 1
-fi
-
-touch "$FILE"
+[ -z "$1" ] && echo "Usage: $0 <filename>" && exit 1
+FILE="$1"; touch "$FILE"
 
 DIR=$(dirname "$FILE")
-BUFFER="$DIR/.$$.novi_buffer.tmp"
-cat "$FILE" > "$BUFFER"
-
-INSERT_TMP="$DIR/.$$.novi_insert.tmp"
-OUT_TMP="$DIR/.$$.novi_out.tmp"
+BUF="$DIR/.$$.novi_buffer.tmp"
+INS="$DIR/.$$.novi_insert.tmp"
+cat "$FILE" > "$BUF"
 
 restore_term() {
     stty icanon echo
-    rm -f "$BUFFER" "$INSERT_TMP" "$OUT_TMP"
+    printf "\033[?25h\033[2J\033[H"
+    rm -f "$BUF" "$INS" "$BUF.tmp"
 }
 trap restore_term EXIT INT TERM
 
-# Track the current active line across the whole file
-CURSOR=1
-WINDOW_SIZE=20
+CUR=1; WIN=20; TOP=1; HELP=0; MSG=""; KBUF=""
+printf "\033[2J"
 
-while true; do
-    TOTAL_LINES=$(awk 'END {print NR}' "$BUFFER")
-    [ -z "$TOTAL_LINES" ] && TOTAL_LINES=0
-    
-    # Ensure cursor stays inside boundaries
-    if [ "$CURSOR" -gt "$TOTAL_LINES" ]; then
-        CURSOR=$TOTAL_LINES
-    fi
-    if [ "$CURSOR" -lt 1 ]; then
-        CURSOR=1
-    fi
+while :; do
+    TOT=$(awk 'END{print NR+0}' "$BUF")
+    [ "$CUR" -gt "$TOT" ] && CUR="$TOT"
+    [ "$CUR" -lt 1 ] && CUR=1
+    [ "$CUR" -ge $((TOP + WIN)) ] && TOP=$((CUR - WIN + 1))
+    [ "$CUR" -lt "$TOP" ] && TOP="$CUR"
+    BOT=$((TOP + WIN - 1)); [ "$BOT" -gt "$TOT" ] && BOT="$TOT"
 
-    # Dynamically calculate the window around the cursor
-    START_LINE=$(( ((CURSOR - 1) / WINDOW_SIZE) * WINDOW_SIZE + 1 ))
-    END_LINE=$((START_LINE + WINDOW_SIZE - 1))
-    if [ "$END_LINE" -gt "$TOTAL_LINES" ]; then
-        END_LINE=$TOTAL_LINES
-    fi
+    # --- DRAW PHASE ---
+    printf "\033[?25l\033[H"
 
-    clear
-    echo "========================================================="
-    echo " File: $FILE | Line: $CURSOR/$TOTAL_LINES (novi Mode)"
-    echo "========================================================="
-    
-    if [ "$TOTAL_LINES" -gt 0 ]; then
-        # Print lines and place a '>' visual anchor at the cursor line
-        awk -v start="$START_LINE" -v end="$END_LINE" -v cur="$CURSOR" '
-        NR>=start && NR<=end {
-            prefix = (NR == cur) ? "> " : "  ";
-            print prefix NR ": " $0;
-        }' "$BUFFER"
+    if [ "$TOT" -gt 0 ]; then
+        awk -v s="$TOP" -v e="$BOT" -v c="$CUR" '
+        NR>=s && NR<=e {
+            printf "\033[K%s%d: %s\n", (NR == c ? "> " : "  "), NR, $0;
+        }' "$BUF"
+        LC=$((BOT - TOP + 1))
     else
-        echo "  (file is empty)"
+        printf "\033[K  (file is empty)\n"
+        LC=1
     fi
-    
-    echo "========================================================="
-    echo " Nav:  [j/k] Move Up/Down   [f/b] Page Down/Up   [50gg] Go to Line"
-    echo " Keys: [i] Insert After     [I] Insert Before    [5dd] Delete Lines"
-    echo " Exit: [w] Save             [q] Quit             [x] Save & Exit"
-    echo "========================================================="
-    echo -n ":"
-    
-    COUNT=""
-    while true; do
+
+    pad=$((WIN - LC))
+    while [ "$pad" -gt 0 ]; do
+        printf "\033[K\n"
+        pad=$((pad - 1))
+    done
+
+    if [ -n "$MSG" ]; then
+        printf "\033[K%s\n" "$MSG"; MSG=""
+    elif [ "$HELP" -eq 1 ]; then
+        printf "\033[K[Help: j/k=Move f/b=Page gg/G=Jump i/I=Insert dd=Del w=Save q=Quit x=Exit]\n"
+    else
+        printf "\033[KFile: %s | Line: %d/%d (h for help)\n" "$FILE" "$CUR" "$TOT"
+    fi
+
+    printf "\033[K:%s\033[?25h" "$KBUF"
+
+    # --- NATIVE PORTABLE INPUT ENGINE ---
+    CNT=""
+    CMD=""
+    while :; do
         stty -icanon -echo
-        CHAR=$(dd bs=1 count=1 2>/dev/null)
+        # Native shell read captures instantly and stops layout shifting
+        C=$(head -c 1 2>/dev/null)
         stty icanon echo
         
-        case "$CHAR" in
-            [0-9])
-                COUNT="${COUNT}${CHAR}"
-                echo -n "$CHAR"
+        # If C is completely blank, an actual Enter key was registered!
+        if [ -z "$C" ]; then
+            CMD="ENTER"
+            break
+        fi
+
+        case "$C" in
+            [0-9]) 
+                CNT="${CNT}${C}"
+                KBUF="${KBUF}${C}" 
+                printf "\r\033[K:%s" "$KBUF" 
                 ;;
-            *)
-                CMD="$CHAR"
-                break
+            *)     
+                CMD="$C"
+                KBUF="${KBUF}${C}" 
+                break 
                 ;;
         esac
     done
 
-    NUM_VAL="$COUNT"
-    [ -z "$COUNT" ] && COUNT=1
+    NV="$CNT"; [ -z "$CNT" ] && CNT=1
 
     case "$CMD" in
-        j)
-            # Move cursor down 1 line (multiplied by count if provided)
-            CURSOR=$((CURSOR + COUNT))
+        ENTER)
+            if [ -n "$NV" ]; then
+                CUR="$NV"
+            fi
             ;;
-        k)
-            # Move cursor up 1 line (multiplied by count if provided)
-            CURSOR=$((CURSOR - COUNT))
-            ;;
-        f)
-            # Page down
-            CURSOR=$((CURSOR + (WINDOW_SIZE * COUNT)))
-            ;;
-        b)
-            # Page up
-            CURSOR=$((CURSOR - (WINDOW_SIZE * COUNT)))
-            ;;
+        h) HELP=$((1 - HELP)) ;;
+        j) CUR=$((CUR + CNT)) ;;
+        k) CUR=$((CUR - CNT)) ;;
+        f) CUR=$((CUR + WIN * CNT)) ;;
+        b) CUR=$((CUR - WIN * CNT)) ;;
         g)
             stty -icanon -echo
-            NEXT_CHAR=$(dd bs=1 count=1 2>/dev/null)
+            NX=$(head -c 1 2>/dev/null)
             stty icanon echo
-            
-            if [ "$NEXT_CHAR" = "g" ]; then
-                if [ -n "$NUM_VAL" ]; then
-                    CURSOR="$NUM_VAL"
-                else
-                    CURSOR=1
-                fi
-            fi
-            ;;
-        G)
-            if [ -n "$NUM_VAL" ]; then
-                CURSOR="$NUM_VAL"
+            if [ "$NX" = "g" ]; then
+                CUR="${NV:-1}"
             else
-                CURSOR="$TOTAL_LINES"
+                MSG="Unknown action: g${NX}"
             fi
             ;;
-        i)
-            echo ""
-            echo "-- INSERT MODE (Append AFTER current line $CURSOR, Enter then Ctrl+D) --"
-            cat > "$INSERT_TMP"
-            if [ -s "$INSERT_TMP" ]; then
-                sed -i "${CURSOR}r $INSERT_TMP" "$BUFFER"
-                rm -f "$INSERT_TMP"
-                # Move cursor to the start of your newly added block
-                CURSOR=$((CURSOR + 1))
-            fi
-            ;;
-        I)
-            echo ""
-            echo "-- INSERT MODE (Insert BEFORE current line $CURSOR, Enter then Ctrl+D) --"
-            cat > "$INSERT_TMP"
-            if [ -s "$INSERT_TMP" ]; then
-                if [ "$CURSOR" -le 1 ]; then
-                    cat "$INSERT_TMP" "$BUFFER" > "$OUT_TMP"
-                    mv "$OUT_TMP" "$BUFFER"
+        G) CUR="${NV:-$TOT}" ;;
+        i|I)
+            mode="AFTER"; [ "$CMD" = "I" ] && mode="BEFORE"
+            printf "\033[2J\033[H-- INSERT %s LINE %d --\n(Type block, press Enter then Ctrl+D to finish)\n" "$mode" "$CUR"
+            cat > "$INS"
+            if [ -s "$INS" ]; then
+                if [ "$CMD" = "i" ]; then
+                    sed -i "${CUR}r $INS" "$BUF"
+                    CUR=$((CUR + 1))
                 else
-                    TARGET_LINE=$((CURSOR - 1))
-                    sed -i "${TARGET_LINE}r $INSERT_TMP" "$BUFFER"
+                    if [ "$CUR" -le 1 ]; then
+                        cat "$INS" "$BUF" > "$BUF.tmp" && mv "$BUF.tmp" "$BUF"
+                    else
+                        sed -i "$((CUR - 1))r $INS" "$BUF"
+                    fi
                 fi
-                rm -f "$INSERT_TMP" "$OUT_TMP"
             fi
+            rm -f "$INS"; printf "\033[2J"
             ;;
         d)
             stty -icanon -echo
-            NEXT_CHAR=$(dd bs=1 count=1 2>/dev/null)
+            NX=$(head -c 1 2>/dev/null)
             stty icanon echo
-            
-            if [ "$NEXT_CHAR" = "d" ]; then
-                if [ "$TOTAL_LINES" -gt 0 ]; then
-                    END_DEL=$((CURSOR + COUNT - 1))
-                    sed -i "${CURSOR},${END_DEL}d" "$BUFFER"
-                fi
+            if [ "$NX" = "d" ] && [ "$TOT" -gt 0 ]; then
+                sed -i "${CUR},$((CUR + CNT - 1))d" "$BUF"
             fi
             ;;
-        w)
-            cat "$BUFFER" > "$FILE"
-            echo ""
-            echo "\"$FILE\" written to disk."
-            sleep 1
-            ;;
-        q)
-            echo ""
-            echo "Discarding unsaved changes."
-            break
-            ;;
-        x)
-            cat "$BUFFER" > "$FILE"
-            echo ""
-            echo "\"$FILE\" saved."
-            break
-            ;;
+        w) cat "$BUF" > "$FILE"; MSG="\"$FILE\" written to disk." ;;
+        q) break ;;
+        x) cat "$BUF" > "$FILE"; break ;;
+        *) [ -n "$CMD" ] && MSG="Unknown action: ${KBUF}" ;;
     esac
+
+    KBUF=""
 done
 
