@@ -50,7 +50,7 @@ while :; do
     if [ -n "$MSG" ]; then
         printf "\033[K%s\n" "$MSG"; MSG=""
     elif [ "$HELP" -eq 1 ]; then
-        printf "\033[K[Help: j/k=Move f/b=Page gg/G=Jump i/I=Insert dd=Del y=Copy p=Paste :w :q :q!]\n"
+        printf "\033[K[Help: j/k=Move f/b=Page o=Open Below O=Open Above /=Search dd=Del :x :w :q]\n"
     else
         printf "\033[KFile: %s | Line: %d/%d (h for help)\n" "$FILE" "$CUR" "$TOT"
     fi
@@ -91,38 +91,82 @@ while :; do
             if [ -n "$NV" ]; then CUR="$NV"; fi
             ;;
         :)
-            # Drop into structural colon input command line execution mode
             printf "\r\033[K:"
             stty icanon echo
             read COLON_CMD
             stty -icanon -echo
             
             case "$COLON_CMD" in
-                w)
-                    cat "$BUF" > "$FILE"
-                    MSG="\"$FILE\" written to disk."
-                    ;;
+                w) cat "$BUF" > "$FILE"; MSG="\"$FILE\" written to disk." ;;
+                x) cat "$BUF" > "$FILE"; break 2 ;;
                 q)
-                    # Check for modifications before exiting safely
                     orig_hash=$(od -An -t x1 "$FILE" | tr -d ' \n\r')
                     curr_hash=$(od -An -t x1 "$BUF" | tr -d ' \n\r')
-                    if [ "$orig_hash" = "$curr_hash" ]; then
-                        break 2
-                    else
-                        MSG="No write since last change (add ! to override)"
-                    fi
+                    if [ "$orig_hash" = "$curr_hash" ]; then break 2; else MSG="No write since last change (add ! to override)"; fi
                     ;;
-                q!|'q!')
-                    break 2
-                    ;;
-                wq)
-                    cat "$BUF" > "$FILE"
-                    break 2
-                    ;;
-                *)
-                    MSG="Not an editor command: :$COLON_CMD"
-                    ;;
+                q!) break 2 ;;
+                wq) cat "$BUF" > "$FILE"; break 2 ;;
+                *) MSG="Not an editor command: :$COLON_CMD" ;;
             esac
+            ;;
+        /)
+            printf "\r\033[K/"
+            stty icanon echo
+            read SEARCH_STR
+            stty -icanon -echo
+            
+            if [ -n "$SEARCH_STR" ]; then
+                MATCH_LINE=$(awk -v cur="$CUR" -v pat="$SEARCH_STR" 'NR>cur && $0 ~ pat {print NR; exit}' "$BUF")
+                if [ -z "$MATCH_LINE" ]; then
+                    MATCH_LINE=$(awk -v pat="$SEARCH_STR" '$0 ~ pat {print "WRAP_" NR; exit}' "$BUF")
+                fi
+                
+                case "$MATCH_LINE" in
+                    WRAP_*)
+                        MATCH_NUM=$(echo "$MATCH_LINE" | cut -d'_' -f2)
+                        CUR="$MATCH_NUM"
+                        MSG="Search wrapped around to line $CUR"
+                        ;;
+                    "")
+                        MSG="Pattern not found: $SEARCH_STR"
+                        ;;
+                    *)
+                        CUR="$MATCH_LINE"
+                        ;;
+                esac
+            fi
+            ;;
+        o)
+            # Safe POSIX Insert Below
+            printf "\033[2J\033[H-- INSERT MODE (o) --\n(Type block, press Enter then Ctrl+D to finish)\n"
+            cat > "$INS"
+            if [ "$TOT" -eq 0 ]; then
+                cat "$INS" > "$BUF"
+                CUR=1
+            else
+                sed -i "${CUR}r $INS" "$BUF"
+                NEW_LINES=$(awk 'END{print NR}' "$INS")
+                [ -z "$NEW_LINES" ] && NEW_LINES=0
+                CUR=$((CUR + (NEW_LINES > 0 ? 1 : 0)))
+            fi
+            rm -f "$INS"; printf "\033[2J"
+            ;;
+        O)
+            # Safe POSIX Insert Above
+            printf "\033[2J\033[H-- INSERT MODE (O) --\n(Type block, press Enter then Ctrl+D to finish)\n"
+            cat > "$INS"
+            if [ "$TOT" -eq 0 ]; then
+                cat "$INS" > "$BUF"
+                CUR=1
+            else
+                if [ "$CUR" -le 1 ]; then
+                    cat "$INS" "$BUF" > "$BUF.tmp" && mv "$BUF.tmp" "$BUF"
+                    CUR=1
+                else
+                    sed -i "$((CUR - 1))r $INS" "$BUF"
+                fi
+            fi
+            rm -f "$INS"; printf "\033[2J"
             ;;
         h) HELP=$((1 - HELP)) ;;
         j) CUR=$((CUR + CNT)) ;;
@@ -146,24 +190,6 @@ while :; do
                 sed -i "${CUR}r $CLIP" "$BUF"
                 MSG="Pasted block below line $CUR."
             fi
-            ;;
-        i|I)
-            mode="AFTER"; [ "$CMD" = "I" ] && mode="BEFORE"
-            printf "\033[2J\033[H-- INSERT %s LINE %d --\n(Type block, press Enter then Ctrl+D to finish)\n" "$mode" "$CUR"
-            cat > "$INS"
-            if [ -s "$INS" ]; then
-                if [ "$CMD" = "i" ]; then
-                    sed -i "${CUR}r $INS" "$BUF"
-                    CUR=$((CUR + 1))
-                else
-                    if [ "$CUR" -le 1 ]; then
-                        cat "$INS" "$BUF" > "$BUF.tmp" && mv "$BUF.tmp" "$BUF"
-                    else
-                        sed -i "$((CUR - 1))r $INS" "$BUF"
-                    fi
-                fi
-            fi
-            rm -f "$INS"; printf "\033[2J"
             ;;
         d)
             stty -icanon -echo; NX=$(head -c 1 2>/dev/null); stty icanon echo
