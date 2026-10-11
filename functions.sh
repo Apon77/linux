@@ -101,6 +101,7 @@ com(){
 	tar --use-compress-program="pigz -k -${2:-6}" -cf "$1.tar.gz" "$1"
 }
 
+desco_url="https://prepaid.desco.org.bd/api/tkdes/customer"
 de () {
     local F="$HOME/electricity_log.txt" TMP="$F.tmp" live_data
     live_data=$(curl "$desco_url/getCustomerDailyConsumption?accountNo=$desco_accountno&dateFrom=$(date -d '40 days ago' +%Y-%m-%d)&dateTo=$(date +%Y-%m-%d)" -ks | jq -r '.data | sort_by(.date) | ["Date", "Diff Taka (৳)", "Diff Unit (kWh)", "Taka/Unit"], (range(1; length) as $i | (if .[$i].date | endswith("-01") then (.[$i].consumedTaka * 100 | round / 100) else ((.[$i].consumedTaka - .[$i-1].consumedTaka) * 100 | round / 100) end) as $taka | ((.[$i].consumedUnit - .[$i-1].consumedUnit) * 1000 | round / 1000) as $unit | [.[$i].date, $taka, $unit, (if $unit == 0 then 0 else (($taka / $unit) * 100 | round / 100) end)]) | @tsv')
