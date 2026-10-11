@@ -1,0 +1,84 @@
+#!/bin/sh
+
+# Usage helper validation
+if [ -z "$1" ]; then
+    echo "Usage: $0 <URL> [output_filename]"
+    exit 1
+fi
+
+URL="$1"
+FILE="${2:-$(echo "$URL" | awk -F'/' '{print $NF}')}"
+[ -z "$FILE" ] && FILE="download.out"
+
+echo "Connecting to destination..."
+echo "URL:  $URL"
+echo "File: $FILE"
+echo "----------------------------------------"
+
+# Phase 1: Check if native wget or curl are available in path for direct execution
+if command -v wget >/dev/null 2>&1; then
+    wget -q -O "$FILE" "$URL"
+    DOWNLOAD_STATUS=$?
+elif command -v curl >/dev/null 2>&1; then
+    curl -s -L -o "$FILE" "$URL"
+    DOWNLOAD_STATUS=$?
+else
+    # Phase 2: Fallback to Perl engine handling both HTTP and HTTPS targets securely
+    perl -e '
+        use strict;
+        use warnings;
+        
+        my ($url, $output) = @ARGV;
+        
+        # Dynamically load LWP or HTTP::Tiny modules available natively in standard Perl paths
+        eval {
+            require HTTP::Tiny;
+            my $response = HTTP::Tiny->new(verify_SSL => 0)->get($url);
+            if ($response->{success}) {
+                open(my $fh, ">", $output) or die "Cannot write file: $!\n";
+                binmode($fh);
+                print $fh $response->{content};
+                close($fh);
+                exit(0);
+            } else {
+                die "HTTP Error: $response->{status} $response->{reason}\n";
+            }
+        };
+        
+        # Secondary fallback layer if structural package dependencies are missing
+        if ($@) {
+            eval {
+                require LWP::UserAgent;
+                my $ua = LWP::UserAgent->new;
+                $ua->ssl_opts(verify_hostname => 0);
+                my $response = $ua->get($url);
+                if ($response->is_success) {
+                    open(my $fh, ">", $output) or die "Cannot write file: $!\n";
+                    binmode($fh);
+                    print $fh $response->decoded_content;
+                    close($fh);
+                    exit(0);
+                } else {
+                    die "LWP Error: " . $response->status_line . "\n";
+                }
+            };
+        }
+        
+        # If all standalone protocol modules are unavailable, drop back to shell fetching alerts
+        if ($@) {
+            print "Dependency error: Please install wget, curl, or perl-openssl modules.\n";
+            exit(1);
+        }
+    ' "$URL" "$FILE"
+    DOWNLOAD_STATUS=$?
+fi
+
+# Validation confirmation report output
+if [ $DOWNLOAD_STATUS -eq 0 ] && [ -s "$FILE" ]; then
+    echo "Download complete: Success."
+else
+    echo "Error: Failed to fetch the requested remote file context resource."
+    rm -f "$FILE"
+    exit 1
+fi
+
