@@ -45,16 +45,14 @@ while true; do
     fi
     
     echo "========================================================="
-    echo " Nav:  [j] Down 20   [k] Up 20     [G] Jump to Line"
+    echo " Nav:  [j] Down 20   [k] Up 20     [50gg] Jump to Line"
     echo " Keys: [i] Append    [I] Insert    [5dd] Delete X Lines  [s] Search"
     echo " Exit: [w] Save      [q] Quit      [x] Save & Exit"
     echo "========================================================="
     echo -n ":"
     
-    # Initialize count tracking
     COUNT=""
     
-    # Accumulator loop for processing leading numbers (e.g., 5dd)
     while true; do
         stty -icanon -echo
         CHAR=$(dd bs=1 count=1 2>/dev/null)
@@ -72,12 +70,48 @@ while true; do
         esac
     done
 
-    # Default count to 1 if no number was typed
+    # If a number was typed but no multiplier is needed for standard keys, we preserve the count
+    NUM_VAL="$COUNT"
     [ -z "$COUNT" ] && COUNT=1
 
     case "$CMD" in
+        g)
+            # Catch the second 'g' for a true 'gg' sequence
+            stty -icanon -echo
+            NEXT_CHAR=$(dd bs=1 count=1 2>/dev/null)
+            stty icanon echo
+            
+            if [ "$NEXT_CHAR" = "g" ]; then
+                # If a number was provided (e.g., 50gg), jump to that line.
+                # If no number was provided (just gg), default to line 1.
+                if [ -n "$NUM_VAL" ]; then
+                    TARGET_JUMP="$NUM_VAL"
+                else
+                    TARGET_JUMP=1
+                fi
+                
+                if [ "$TARGET_JUMP" -le "$TOTAL_LINES" ] && [ "$TARGET_JUMP" -gt 0 ]; then
+                    START_LINE="$TARGET_JUMP"
+                else
+                    # Fallback to the last line if the typed line number is way out of bounds
+                    START_LINE="$TOTAL_LINES"
+                fi
+            fi
+            ;;
+        G)
+            # Capital G fallback: If a number was typed (e.g., 50G), jump there.
+            # If just 'G', jump to the absolute bottom of the file.
+            if [ -n "$NUM_VAL" ]; then
+                TARGET_JUMP="$NUM_VAL"
+            else
+                TARGET_JUMP="$TOTAL_LINES"
+            fi
+            
+            if [ "$TARGET_JUMP" -le "$TOTAL_LINES" ] && [ "$TARGET_JUMP" -gt 0 ]; then
+                START_LINE="$TARGET_JUMP"
+            fi
+            ;;
         j)
-            # Apply scrolling multiplier based on the number pressed
             SCROLL_AMT=$((WINDOW_SIZE * COUNT))
             START_LINE=$((START_LINE + SCROLL_AMT))
             if [ "$START_LINE" -gt "$TOTAL_LINES" ]; then
@@ -89,13 +123,6 @@ while true; do
             SCROLL_AMT=$((WINDOW_SIZE * COUNT))
             START_LINE=$((START_LINE - SCROLL_AMT))
             [ "$START_LINE" -lt 1 ] && START_LINE=1
-            ;;
-        G)
-            echo -n "Jump to which line number? "
-            read JUMP_LINE
-            if [ -n "$JUMP_LINE" ] && [ "$JUMP_LINE" -le "$TOTAL_LINES" ] && [ "$JUMP_LINE" -gt 0 ]; then
-                START_LINE=$JUMP_LINE
-            fi
             ;;
         s)
             echo -n "Enter search term: "
@@ -134,7 +161,6 @@ while true; do
             fi
             ;;
         d)
-            # Check for second 'd' to match 'dd'
             stty -icanon -echo
             NEXT_CHAR=$(dd bs=1 count=1 2>/dev/null)
             stty icanon echo
@@ -145,7 +171,6 @@ while true; do
                 read LINE_NUM
                 
                 if [ -n "$LINE_NUM" ]; then
-                    # Calculate end range based on the count requested
                     END_DEL=$((LINE_NUM + COUNT - 1))
                     sed -i "${LINE_NUM},${END_DEL}d" "$BUFFER"
                 fi
