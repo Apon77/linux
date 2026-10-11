@@ -1,83 +1,101 @@
 #!/bin/sh
 
-# Usage helper validation
 if [ -z "$1" ]; then
-    echo "Usage: $0 <URL> [output_filename]"
+    echo "Usage: $0 <HTTPS_URL> [-O filename.sh]"
     exit 1
 fi
 
 URL="$1"
-FILE="${2:-$(echo "$URL" | awk -F'/' '{print $NF}')}"
-[ -z "$FILE" ] && FILE="download.out"
+FILE=""
 
-echo "Connecting to destination..."
-echo "URL:  $URL"
-echo "File: $FILE"
-echo "----------------------------------------"
+# --- POSIX NATIVE OPTION PARSER ---
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -O|-o|-) FILE="$2"; shift 2 ;;
+        *) URL="$1"; shift 1 ;;
+    esac
+done
 
-# Phase 1: Check if native wget or curl are available in path for direct execution
-if command -v wget >/dev/null 2>&1; then
-    wget -q -O "$FILE" "$URL"
-    DOWNLOAD_STATUS=$?
-elif command -v curl >/dev/null 2>&1; then
-    curl -s -L -o "$FILE" "$URL"
-    DOWNLOAD_STATUS=$?
-else
-    # Phase 2: Fallback to Perl engine handling both HTTP and HTTPS targets securely
-    perl -e '
-        use strict;
-        use warnings;
-        
-        my ($url, $output) = @ARGV;
-        
-        # Dynamically load LWP or HTTP::Tiny modules available natively in standard Perl paths
-        eval {
-            require HTTP::Tiny;
-            my $response = HTTP::Tiny->new(verify_SSL => 0)->get($url);
-            if ($response->{success}) {
-                open(my $fh, ">", $output) or die "Cannot write file: $!\n";
-                binmode($fh);
-                print $fh $response->{content};
-                close($fh);
-                exit(0);
-            } else {
-                die "HTTP Error: $response->{status} $response->{reason}\n";
-            }
-        };
-        
-        # Secondary fallback layer if structural package dependencies are missing
-        if ($@) {
-            eval {
-                require LWP::UserAgent;
-                my $ua = LWP::UserAgent->new;
-                $ua->ssl_opts(verify_hostname => 0);
-                my $response = $ua->get($url);
-                if ($response->is_success) {
-                    open(my $fh, ">", $output) or die "Cannot write file: $!\n";
-                    binmode($fh);
-                    print $fh $response->decoded_content;
-                    close($fh);
-                    exit(0);
-                } else {
-                    die "LWP Error: " . $response->status_line . "\n";
-                }
-            };
-        }
-        
-        # If all standalone protocol modules are unavailable, drop back to shell fetching alerts
-        if ($@) {
-            print "Dependency error: Please install wget, curl, or perl-openssl modules.\n";
-            exit(1);
-        }
-    ' "$URL" "$FILE"
-    DOWNLOAD_STATUS=$?
+# Extract name from the URL path if no flag was explicitly typed
+if [ -z "$FILE" ]; then
+    CLEAN_URL=$(echo "$URL" | cut -d'?' -f1)
+    FILE=$(echo "$CLEAN_URL" | sed 's|/$||' | awk -F'/' '{print $NF}')
+fi
+if [ -z "$FILE" ] || [ "$FILE" = "-" ]; then
+    FILE="download.out"
 fi
 
-# Validation confirmation report output
-if [ $DOWNLOAD_STATUS -eq 0 ] && [ -s "$FILE" ]; then
-    echo "Download complete: Success."
+# Max loop constraint to prevent infinite redirect loops
+REDIRECT_DEPTH=0
+MAX_REDIRECTS=5
+
+while [ "$REDIRECT_DEPTH" -lt "$MAX_REDIRECTS" ]; do
+    HOST=$(echo "$URL" | sed -e 's|https://||' -e 's|http://||' | cut -d'/' -f1)
+    PATH_TARGET=$(echo "$URL" | sed -e 's|https://||' -e 's|http://||' | cut -d'/' -f2- | sed 's|^|/|')
+
+    echo "Connecting securely via OpenSSL..."
+    echo "Host: $HOST"
+    echo "Path: $PATH_TARGET"
+    echo "----------------------------------------"
+
+    # Fetch headers and body separately into a temp processing file
+    TMP_RAW="/tmp/nowget_raw_$$.tmp"
+    
+    (
+        printf "GET %s HTTP/1.1\r\n" "$PATH_TARGET"
+        printf "Host: %s\r\n" "$HOST"
+        printf "User-Agent: nowget-raw/1.0\r\n"
+        printf "Connection: close\r\n\r\n"
+    ) | openssl s_client -connect "${HOST}:443" -servername "$HOST" -quiet 2>/dev/null > "$TMP_RAW"
+
+    # Check for HTTP redirect codes (301, 302, 307, 308) in the first line
+    HTTP_STATUS=$(head -n 1 "$TMP_RAW" | awk '{print $2}')
+
+    case "$HTTP_STATUS" in
+        301|302|303|307|308)
+            # Extract the redirected target URL from the headers safely
+            # Using tr to purge system \r characters from HTTP definitions
+            NEW_LOCATION=$(grep -i '^Location:' "$TMP_RAW" | head -n 1 | awk '{print $2}' | tr -d '\r')
+            
+            if [ -n "$NEW_LOCATION" ]; then
+                echo "Redirect detected ($HTTP_STATUS) -> Following to: $NEW_LOCATION"
+                URL="$NEW_LOCATION"
+                REDIRECT_DEPTH=$((REDIRECT_DEPTH + 1))
+                rm -f "$TMP_RAW"
+                continue
+            fi
+            ;;
+    esac
+
+    # If no redirection is detected, drop server header blocks and commit body stream data
+    awk '
+        BEGIN { in_body = 0 }
+        {
+            sub(/\r$/, "")
+            if (in_body) {
+                print $0
+            } else {
+                if ($0 == "") {
+                    in_body = 1
+                }
+            }
+        }
+    ' "$TMP_RAW" > "$FILE"
+    
+    rm -f "$TMP_RAW"
+    break
+done
+
+if [ "$REDIRECT_DEPTH" -eq "$MAX_REDIRECTS" ]; then
+    echo "Error: Maximum redirect execution limit exceeded ($MAX_REDIRECTS)."
+    exit 1
+fi
+
+if [ -s "$FILE" ]; then
+    echo "----------------------------------------"
+    echo "Download complete: Success ($FILE)."
 else
-    echo "Error: Failed to fetch the requested remote file context resource."
+    echo "Error: Could not retrieve secure file data blocks."
     rm -f "$FILE"
     exit 1
 fi
