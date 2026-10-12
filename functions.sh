@@ -87,6 +87,16 @@ bak () {
 	cp $1 $1.bak -a
 }
 
+c() {
+    if [ $# -eq 0 ]; then
+        clear
+    elif [ -f "$1" ] && [ $# -eq 1 ]; then
+        cat "$1"
+    else
+        awk "BEGIN { print $* }"
+    fi
+}
+
 cnf(){
 	curl https://command-not-found.com/$1 -s|grep apt
 }

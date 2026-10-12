@@ -4,7 +4,6 @@ alias aptn='sudo apt --no-install-recommends install'
 alias aptp='sudo apt purge'
 alias aptr='sudo apt remove'
 alias apts='apt search'
-alias c='clear'
 alias cl='curl -LO'
 alias cs='ccache -s'
 alias cx="chmod +x"
