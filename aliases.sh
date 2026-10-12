@@ -70,4 +70,3 @@ alias ve='. ~/venv/bin/activate'
 alias vm="vim Makefile"
 alias vz='vim ~/.zshrc'
 alias wh='which'
-alias z='sudo zerotier-cli join 8056c2e21cf19ea8'
