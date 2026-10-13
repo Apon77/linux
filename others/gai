@@ -84,15 +84,45 @@ else
   else
     MSGS=$(jq -n --argjson n "$USER_MSG" '[$n]')
   fi
-  PAYLOAD=$(jq -n --arg m "$GROQ_MODEL" --argjson msgs "$MSGS" '{model:$m,messages:$msgs}')
-  (curl -s "https://api.groq.com/openai/v1/chat/completions" \
+  
+  # Payload with Claude playground options and streaming enabled
+  PAYLOAD=$(jq -n \
+    --arg m "$GROQ_MODEL" \
+    --argjson msgs "$MSGS" \
+    --argjson temp 0.6 \
+    --argjson max_tok 2048 \
+    --argjson tp 0.95 \
+    '{model:$m, messages:$msgs, temperature:$temp, max_completion_tokens:$max_tok, top_p:$tp, stream:true, reasoning_effort:"default"}')
+
+  REPLY=""
+  
+  # Stream processing via curl
+  while IFS= read -r line; do
+    if [[ "$line" == data:* ]]; then
+      data_content="${line#data: }"
+      if [ "$data_content" = "[DONE]" ]; then
+        break
+      fi
+      chunk=$(echo "$data_content" | jq -r '.choices[0].delta.content // empty' 2>/dev/null)
+      if [ -n "$chunk" ] && [ "$chunk" != "null" ]; then
+        echo -n "$chunk"
+        REPLY+="$chunk"
+      fi
+    elif [[ "$line" =~ ^\{ ]]; then
+      ERR_CHECK=$(echo "$line" | jq -r '.error.message // empty' 2>/dev/null)
+      if [ -n "$ERR_CHECK" ]; then
+        echo -e "\n${RED}❌ Groq API Error:${NC}"
+        echo "$line"
+        exit 1
+      fi
+    fi
+  done < <(curl -s "https://api.groq.com/openai/v1/chat/completions" \
     -H "Authorization: Bearer $GROQ_KEY" -H "Content-Type: application/json" \
-    -X POST -d "$PAYLOAD" >"$TMP") &
-  CURL_PID=$!; spinner $CURL_PID; wait $CURL_PID
-  RESP=$(<"$TMP")
-  REPLY=$(echo "$RESP"|jq -r '.choices[0].message.content // empty')
-  if [ -n "$REPLY" ] && [ "$REPLY" != "null" ]; then
-    echo "$REPLY"
+    -X POST -d "$PAYLOAD")
+
+  echo "" # Trailing newline after stream finishes
+
+  if [ -n "$REPLY" ]; then
     TS=$(date "+%Y-%m-%d %H:%M:%S")
     {
       echo "=================================================="
@@ -103,7 +133,7 @@ else
     UPDATED=$(echo "$MSGS"|jq --argjson a "$ASSISTANT_MSG" '. + [$a]')
     echo "$UPDATED" >"$HIST_Q"
   else
-    echo -e "${RED}❌ Groq API Error:${NC}"
-    echo "$RESP"; exit 1
+    echo -e "${RED}❌ Groq API Error or Empty Response${NC}"
+    exit 1
   fi
 fi
