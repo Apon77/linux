@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
 [[ -z "$1" ]] && echo "Usage: $0 <script>" && exit 1
 
-first=1 buf=""
+# Safely buffer the target script into memory array up front
+mapfile -t lines < "$1"
 
-while IFS= read -r line <&3 || [[ -n "$line" ]]; do
+first=1 buf=""
+for line in "${lines[@]}"; do
   [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
 
   buf+="${buf:+$'\n'}$line"
 
-  # Uses a fast built-in parser check instead of regex or heavy subprocesses
-  if ! bash -n <(echo "$buf") 2>/dev/null; then
-    # If the error is an unfinished block, keep buffering lines
-    if bash -n <(echo "$buf") 2>&1 | grep -Eq 'unexpected end of file|unexpected token `fi|syntax error:'; then
-      [[ "$buf" =~ (if|for|while|case) && ! "$buf" =~ (fi|done|esac) ]] && continue
-    fi
-  fi
+  # Native bash engine syntax validation check
+  # Keeps buffering if the syntax is incomplete (handles functions, loops, if blocks)
+  ! bash -n <<< "$buf" 2>/dev/null && continue
 
   [[ $first -eq 1 ]] && first=0 || echo ""
   echo -e "\033[1;34m$buf\033[0m"
@@ -26,5 +24,5 @@ while IFS= read -r line <&3 || [[ -n "$line" ]]; do
     *)    eval "$buf" ;;
   esac
   buf=""
-done 3< "$1"
+done
 
