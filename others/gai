@@ -76,7 +76,7 @@ if [ "$BACKEND" = "ai" ]; then
     echo -e "${RED}❌ Gemini API Error:${NC}"
     echo "$RESP"; exit 1
   fi
-else
+  else
   [[ -z "$GROQ_KEY" ]] && { echo -e "${RED}Error: GROQ_API_KEY not set${NC}"; exit 1; }
   USER_MSG=$(jq -n --arg c "$PROMPT" '{role:"user",content:$c}')
   if [ "$CONTINUE" = true ] && [ -f "$HIST_Q" ]; then
@@ -84,44 +84,32 @@ else
   else
     MSGS=$(jq -n --argjson n "$USER_MSG" '[$n]')
   fi
-  
-  # Payload with Claude playground options and streaming enabled
-  PAYLOAD=$(jq -n \
-    --arg m "$GROQ_MODEL" \
-    --argjson msgs "$MSGS" \
-    --argjson temp 0.6 \
-    --argjson max_tok 2048 \
-    --argjson tp 0.95 \
-    '{model:$m, messages:$msgs, temperature:$temp, max_completion_tokens:$max_tok, top_p:$tp, stream:true, reasoning_effort:"default"}')
 
-  REPLY=""
-  
-  # Stream processing via curl
-  while IFS= read -r line; do
-    if [[ "$line" == data:* ]]; then
-      data_content="${line#data: }"
-      if [ "$data_content" = "[DONE]" ]; then
-        break
-      fi
-      chunk=$(echo "$data_content" | jq -r '.choices[0].delta.content // empty' 2>/dev/null)
-      if [ -n "$chunk" ] && [ "$chunk" != "null" ]; then
-        echo -n "$chunk"
-        REPLY+="$chunk"
-      fi
-    elif [[ "$line" =~ ^\{ ]]; then
-      ERR_CHECK=$(echo "$line" | jq -r '.error.message // empty' 2>/dev/null)
-      if [ -n "$ERR_CHECK" ]; then
-        echo -e "\n${RED}❌ Groq API Error:${NC}"
-        echo "$line"
-        exit 1
-      fi
-    fi
-  done < <(curl -s "https://api.groq.com/openai/v1/chat/completions" \
+  # Model-specific reasoning options
+  if [[ "$GROQ_MODEL" == openai/gpt-oss* ]]; then
+    EXTRA='{"reasoning_effort":"medium","include_reasoning":false}'
+  else
+    EXTRA='{"reasoning_effort":"default","reasoning_format":"hidden"}'
+  fi
+
+  PAYLOAD=$(jq -n --arg m "$GROQ_MODEL" --argjson msgs "$MSGS" --argjson extra "$EXTRA" \
+    '{model:$m, messages:$msgs, temperature:0.6, max_completion_tokens:2048, top_p:0.95, stream:true} + $extra')
+
+  RAW=$(mktemp); trap 'rm -f "$TMP" "$RAW"' EXIT
+  : >"$TMP"
+
+  # Pipeline: raw SSE -> (saved for error reporting) -> extract delta text -> screen + $TMP
+  # jq -j emits text exactly as received, so newlines/markdown survive.
+  curl -sN "https://api.groq.com/openai/v1/chat/completions" \
     -H "Authorization: Bearer $GROQ_KEY" -H "Content-Type: application/json" \
-    -X POST -d "$PAYLOAD")
+    -X POST -d "$PAYLOAD" \
+  | tee "$RAW" \
+  | jq --unbuffered -Rj 'ltrimstr("data: ") | select(. != "[DONE]") | fromjson?
+                         | (.choices[0].delta.content // empty)' 2>/dev/null \
+  | tee "$TMP"
+  echo ""
 
-  echo "" # Trailing newline after stream finishes
-
+  REPLY=$(<"$TMP")
   if [ -n "$REPLY" ]; then
     TS=$(date "+%Y-%m-%d %H:%M:%S")
     {
@@ -130,10 +118,11 @@ else
       echo "=================================================="; echo ""
     } >>"./$LOG_Q_TXT"
     ASSISTANT_MSG=$(jq -n --arg c "$REPLY" '{role:"assistant",content:$c}')
-    UPDATED=$(echo "$MSGS"|jq --argjson a "$ASSISTANT_MSG" '. + [$a]')
+    UPDATED=$(echo "$MSGS" | jq --argjson a "$ASSISTANT_MSG" '. + [$a]')
     echo "$UPDATED" >"$HIST_Q"
   else
-    echo -e "${RED}❌ Groq API Error or Empty Response${NC}"
+    echo -e "${RED}❌ Groq API Error or Empty Response:${NC}"
+    cat "$RAW"
     exit 1
   fi
 fi
