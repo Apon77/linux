@@ -10,6 +10,8 @@ grep -Fxq 'source ~/linux/functions.sh' ~/.bashrc || echo 'source ~/linux/functi
 grep -Fxq 'source ~/linux/easy.bash' ~/.bashrc || echo 'source ~/linux/easy.bash' >> ~/.bashrc
 grep -Fxq 'source ~/linux/aliases.sh' ~/.bashrc || echo 'source ~/linux/aliases.sh' >> ~/.bashrc
 
+
+mkdir -p ~/bin
 wget -O ~/linux/others/gai https://raw.githubusercontent.com/Apon77/linux/refs/heads/junk/others/gai
 chmod +x ~/linux/others/gai
 ln -sf ~/linux/others/gai ~/bin/gai
