@@ -1,12 +1,12 @@
 #!/bin/bash
-GEMINI_KEY="${GEMINI_API_KEY}" GROQ_KEY="${GROQ_API_KEY}"
-GEMINI_MODEL="gemini-3.5-flash-lite" GROQ_MODEL="qwen/qwen3.8-27b"
-HIST_G="$HOME/.gemini_id.txt" HIST_Q="$HOME/.groq_history.json"
-LOG_DIR="." LOG_G_TXT="ai_chat_history.txt" LOG_Q_TXT="groq_chat_history.txt"
+GEMINI_KEY="${GEMINI_API_KEY}" GROQ_KEY="${GROQ_API_KEY}"     GEMINI_MODEL="gemini-3.5-flash-lite" GROQ_MODEL="qwen/qwen3.8-27b"
+LOG_DIR="$HOME/.gai"
+mkdir -p "$LOG_DIR"
+HIST_G="$LOG_DIR/.gemini_id.txt" HIST_Q="$LOG_DIR/groq_history.json"
+LOG_G_TXT="ai_chat_history.txt" LOG_Q_TXT="groq_chat_history.txt"
 GREEN='\033[0;32m' RED='\033[0;31m' NC='\033[0m'
 
 show_help(){ echo -e "Usage: $0 [ai|groq] [-c|--continue] [-m|--model MODEL] [-h|--help] [FILE|PROMPT]\nBackend defaults to 'groq' if omitted.\nBackends:\n - ai: Gemini (Key: GEMINI_API_KEY)\n - groq: Groq (Key: GROQ_API_KEY)\nOptions:\n -m, --model: Override default Groq model\n   - 120: Uses openai/gpt-oss-120b\n   - 20: Uses openai/gpt-oss-20b\n   - <anything else>: Uses the specified model"; exit 0; }
-
 spinner(){ pid=$1 d=0.1 f=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏') s=$SECONDS; while kill -0 "$pid" 2>/dev/null; do for r in "${f[@]}"; do printf "\rThinking %s %ds" "$r" "$((SECONDS-s))"; sleep $d; kill -0 "$pid" 2>/dev/null || break; done; done; printf "\r\033[K"; }
 
 [[ "$1" =~ ^(-h|--help)$ ]] && show_help
@@ -14,7 +14,6 @@ BACKEND="groq"
 CONTINUE=false
 CUSTOM_MODEL=""
 PROMPT=""
-LOG_DIR="."
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -24,14 +23,14 @@ while [[ $# -gt 0 ]]; do
     -m|--model) [[ -z "$2" ]] && { echo -e "${RED}Error: --model requires value${NC}"; exit 1; }; CUSTOM_MODEL="$2"; shift 2 ;;
     -h|--help) show_help ;;
     *)
-      if [[ -f "$1" ]] && [[ -z "$PROMPT" ]]; then PROMPT=$(<"$1"); LOG_DIR=$(dirname "$1"); shift;
+      if [[ -f "$1" ]] && [[ -z "$PROMPT" ]]; then PROMPT=$(<"$1"); shift;
       elif [[ -z "$PROMPT" ]]; then PROMPT="$*"; shift; break;
       else break; fi
       ;;
   esac
 done
 
-if [ -z "$PROMPT" ] && [ -f "./prompt.txt" ]; then PROMPT=$(<"./prompt.txt"); LOG_DIR="."; fi
+if [ -z "$PROMPT" ] && [ -f "./prompt.txt" ]; then PROMPT=$(<"./prompt.txt"); fi
 
 # Logic to determine the actual model to use if --model was passed
 if [[ -n "$CUSTOM_MODEL" ]]; then
@@ -76,7 +75,7 @@ if [ "$BACKEND" = "ai" ]; then
     echo -e "${RED}❌ Gemini API Error:${NC}"
     echo "$RESP"; exit 1
   fi
-  else
+else
   [[ -z "$GROQ_KEY" ]] && { echo -e "${RED}Error: GROQ_API_KEY not set${NC}"; exit 1; }
   USER_MSG=$(jq -n --arg c "$PROMPT" '{role:"user",content:$c}')
   if [ "$CONTINUE" = true ] && [ -f "$HIST_Q" ]; then
@@ -98,8 +97,6 @@ if [ "$BACKEND" = "ai" ]; then
   RAW=$(mktemp); trap 'rm -f "$TMP" "$RAW"' EXIT
   : >"$TMP"
 
-  # Pipeline: raw SSE -> (saved for error reporting) -> extract delta text -> screen + $TMP
-  # jq -j emits text exactly as received, so newlines/markdown survive.
   curl -sN "https://api.groq.com/openai/v1/chat/completions" \
     -H "Authorization: Bearer $GROQ_KEY" -H "Content-Type: application/json" \
     -X POST -d "$PAYLOAD" \
@@ -116,7 +113,7 @@ if [ "$BACKEND" = "ai" ]; then
       echo "=================================================="
       echo "[$TS] USER:"; echo "$PROMPT"; echo ""; echo "[$TS] GROQ:"; echo "$REPLY"
       echo "=================================================="; echo ""
-    } >>"./$LOG_Q_TXT"
+    } >>"${LOG_DIR}/$LOG_Q_TXT"
     ASSISTANT_MSG=$(jq -n --arg c "$REPLY" '{role:"assistant",content:$c}')
     UPDATED=$(echo "$MSGS" | jq --argjson a "$ASSISTANT_MSG" '. + [$a]')
     echo "$UPDATED" >"$HIST_Q"
