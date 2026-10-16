@@ -38,6 +38,7 @@ alias gs='gcloud cloud-shell ssh'
 alias gsp='gcloud cloud-shell ssh --ssh-flag "-D 1080"'
 alias h='htop'
 alias hi=history
+alias hig='history | grep'
 alias lg='less +G'
 alias mon0='echo "0" | sudo tee /sys/module/wlan/parameters/con_mode'
 alias mon1='echo "4" | sudo tee /sys/module/wlan/parameters/con_mode'
