@@ -92,7 +92,7 @@ else
   fi
 
   PAYLOAD=$(jq -n --arg m "$GROQ_MODEL" --argjson msgs "$MSGS" --argjson extra "$EXTRA" \
-    '{model:$m, messages:$msgs, temperature:0.6, max_completion_tokens:2048, top_p:0.95, stream:true} + $extra')
+    '{model:$m, messages:$msgs, temperature:0.6, max_completion_tokens:4096, top_p:0.95, stream:true} + $extra')
 
   RAW=$(mktemp); trap 'rm -f "$TMP" "$RAW"' EXIT
   : >"$TMP"
