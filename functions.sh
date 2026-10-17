@@ -255,45 +255,25 @@ awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'$KEY'\042/){print $(i+1)}}}' | tr -d 
 # curl *** | jqq id
 }
 
-lp() {
-        local r="$HOME/bin"
-        [ ! -d "$r" ] && echo "❌ Error: $r missing." && return 1
-
-        # 1. Remove broken symlinks in ~/bin
-        while IFS= read -r broken; do
-                rm -f "$broken" && echo "🗑️  Removed: $(basename "$broken")"
-        done < <(find "$r" -maxdepth 1 -type l -xtype l)
-
-        # 2. Scan subdirectories in ~/bin
-        while IFS= read -r d; do
-                local s="$d"
-                # If the dir has a 'bin' subfolder, use that instead
-                [ -d "$d/bin" ] && s="$d/bin"
-
-                # Find executables inside the directory
-                while IFS= read -r e; do
-                        local n
-                        n=$(basename "$e")
-                        
-                        # Skip if it's named 'bin'
-                        [ "$n" = "bin" ] && continue
-
-                        # Create symlink in ~/bin
-                        if ln -sf "$e" "$r/$n"; then
-                                echo "🔗 Added: $n -> $e"
-                        else
-                                echo "❌ Failed to link: $n"
-                        fi
-                done < <(find "$s" -maxdepth 5 -type f -executable)
-
-        done < <(find "$r" -mindepth 1 -maxdepth 1 -type d)
-
-        echo "✅ Done!"
+lp(){
+	tmp_list=$(mktemp)
+	current_dir=$(pwd)
+	cd ~/bin
+	find . -mindepth 2 -type f -executable > "$tmp_list"
+	nl "$tmp_list"
+	echo -n "Enter the numbers to symlink (separated by spaces): "
+	read nums
+	for num in $(echo "$nums" | xargs); do
+		chosen_file=$(sed -n "${num}p" "$tmp_list")
+		if [ -n "$chosen_file" ]; then
+			clean_path=$(realpath "$chosen_file")
+			ln -sf "$clean_path" ~/bin/$(basename "$clean_path")
+			echo "$clean_path > ~/bin/$(basename $clean_path)"
+		fi
+	done
+	rm "$tmp_list"
+	cd $current_dir
 }
-
-
-
-
 
 m(){
 	curl cheat.sh/$1
