@@ -52,12 +52,12 @@ env -i HOME=/root TERM=$TERM chroot $UBUNTUPATH /bin/bash --login
 umountstorage(){
 # Umount everything after exiting the shell. Because the graphical environment will be installed later, they are commented. If you do not want to install a graphics environment, uncomment the following commands.
 
-#umount $UBUNTUPATH/dev/shm
-umount $UBUNTUPATH/dev/pts
-umount $UBUNTUPATH/dev
-umount $UBUNTUPATH/proc
-umount $UBUNTUPATH/sys
-umount $UBUNTUPATH/sdcard
+#umount -fl $UBUNTUPATH/dev/shm
+umount -fl $UBUNTUPATH/dev/pts
+umount -fl $UBUNTUPATH/dev
+umount -fl $UBUNTUPATH/proc
+umount -fl $UBUNTUPATH/sys
+umount -fl $UBUNTUPATH/sdcard
 }
 
 predownload
