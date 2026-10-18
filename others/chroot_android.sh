@@ -60,7 +60,22 @@ umount -fl $UBUNTUPATH/sys
 umount -fl $UBUNTUPATH/sdcard
 }
 
+makeminimal(){
+cat <<EOF > $UBUNTUPATH/etc/apt/apt.conf.d/99minimal
+APT::Install-Recommends "false";
+APT::Install-Suggests "false";
+Acquire::Languages "none";
+EOF
+
+cat <<EOF >> $UBUNTUPATH/etc/apt/apt.conf.d/99minimal
+DPkg::Post-Invoke { "rm -rf /var/lib/apt/lists/* || true"; };
+Apt::Post-Invoke { "rm -rf /var/lib/apt/lists/* || true"; };
+EOF
+}
+
+
 predownload
+#makeminimal
 #checkstorage
 #cleanstorage
 #checkstorage
