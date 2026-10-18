@@ -46,8 +46,10 @@ mount --bind /sdcard $UBUNTUPATH/sdcard
 
 startchroot(){
 # chroot into Ubuntu
-env -i HOME=/root TERM=$TERM chroot $UBUNTUPATH /bin/bash --login
+#env -i HOME=/root TERM=$TERM chroot $UBUNTUPATH /bin/bash --login
+env -i HOME=/home/k TERM=$TERM chroot $UBUNTUPATH /bin/su - k
 }
+
 
 umountstorage(){
 # Umount everything after exiting the shell. Because the graphical environment will be installed later, they are commented. If you do not want to install a graphics environment, uncomment the following commands.
@@ -74,7 +76,7 @@ EOF
 }
 
 
-predownload
+#predownload
 #makeminimal
 #checkstorage
 #cleanstorage
