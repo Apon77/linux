@@ -54,12 +54,12 @@ env -i HOME=/home/k TERM=$TERM chroot $UBUNTUPATH /bin/su - k
 umountstorage(){
 # Umount everything after exiting the shell. Because the graphical environment will be installed later, they are commented. If you do not want to install a graphics environment, uncomment the following commands.
 
-#umount -fl $UBUNTUPATH/dev/shm
-umount -fl $UBUNTUPATH/dev/pts
-umount -fl $UBUNTUPATH/dev
-umount -fl $UBUNTUPATH/proc
-umount -fl $UBUNTUPATH/sys
-umount -fl $UBUNTUPATH/sdcard
+#umount -l $UBUNTUPATH/dev/shm
+umount -l $UBUNTUPATH/dev/pts
+umount -l $UBUNTUPATH/dev
+umount -l $UBUNTUPATH/proc
+umount -l $UBUNTUPATH/sys
+umount -l $UBUNTUPATH/sdcard
 }
 
 makeminimal(){
@@ -84,3 +84,7 @@ EOF
 mountstorage
 startchroot
 umountstorage && echo umounted
+
+#hello i broke chroot
+#perl -e 'mkdir "/tmp/escape"; chroot "/tmp/escape"; chdir ".." for 1..50; chroot "."; system("/system/bin/sh");'
+#python3 -c 'import os; os.mkdir("/tmp/escape"); os.chroot("/tmp/escape"); [os.chdir("..") for _ in range(50)]; os.chroot("."); os.system("/system/bin/sh")'
