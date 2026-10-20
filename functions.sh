@@ -385,3 +385,14 @@ gcr() {
 		echo "\033[1;33m[+] Mode: 30m Cache\033[0m"
 	fi
 }
+
+awkc() {
+    [ $# -eq 0 ] && { echo "Usage: awkc <col1> [col2 ...] [-F <delim>]"; return 1; }
+    local cols="" delim=""
+    while [ $# -gt 0 ]; do
+        [ "$1" = "-F" ] && { delim="-F $2"; shift 2; continue; }
+        cols="${cols:+$cols, }\$$1"
+        shift
+    done
+    awk $delim "{print $cols}"
+}
