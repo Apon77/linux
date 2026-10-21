@@ -42,6 +42,7 @@ mkdir -p $UBUNTUPATH/proc $UBUNTUPATH/sys $UBUNTUPATH/sdcard
 [ -c $UBUNTUPATH/dev/zero ]   || mknod -m 666 $UBUNTUPATH/dev/zero c 1 5
 [ -c $UBUNTUPATH/dev/random ] || mknod -m 666 $UBUNTUPATH/dev/random c 1 8
 [ -c $UBUNTUPATH/dev/urandom ]|| mknod -m 666 $UBUNTUPATH/dev/urandom c 1 9
+[ -c $UBUNTUPATH/dev/tty ] || mknod -m 666 $UBUNTUPATH/dev/tty c 5 0
 
 # FIX: Create the standard device multiplexer and descriptor symlinks
 [ -e $UBUNTUPATH/dev/ptmx ]   || ln -s pts/ptmx $UBUNTUPATH/dev/ptmx
@@ -82,21 +83,23 @@ umount -l $UBUNTUPATH/sys
 umount -l $UBUNTUPATH/sdcard
 }
 
-makeminimal(){
-cat <<EOF > $UBUNTUPATH/etc/apt/apt.conf.d/99minimal
+noinstallrecommends(){
+cat <<EOF > $UBUNTUPATH/etc/apt/apt.conf.d/99noinstallrecommends
 APT::Install-Recommends "false";
 APT::Install-Suggests "false";
 Acquire::Languages "none";
 EOF
+}
 
-cat <<EOF >> $UBUNTUPATH/etc/apt/apt.conf.d/99minimal
+cleanup(){
+cat <<EOF > $UBUNTUPATH/etc/apt/apt.conf.d/99cleanup
 DPkg::Post-Invoke { "rm -rf /var/lib/apt/lists/* || true"; };
 Apt::Post-Invoke { "rm -rf /var/lib/apt/lists/* || true"; };
 EOF
 }
-
 #predownload
-#makeminimal
+#noinstallrecommends
+#cleanup
 #checkstorage
 #cleanstorage
 #checkstorage
