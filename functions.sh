@@ -75,8 +75,8 @@ On_ICyan='\033[0;106m'    # Cyan
 On_IWhite='\033[0;107m'   # White
 
 #termux
-if [[ $(uname -a) == *"Android"* ]]; then
-[ ! -d ~/storage ] && termux-setup-storage
+if [[ $(uname -a) == *"Android"* ]] && [ "$EUID" -ne 0 ]; then
+    [ ! -d ~/storage ] && termux-setup-storage
 fi
 
 HISTTIMEFORMAT="%d/%m/%y %T "
