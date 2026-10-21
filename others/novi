@@ -1,206 +1,105 @@
 #!/bin/sh
 [ -z "$1" ] && echo "Usage: $0 <filename>" && exit 1
 FILE="$1"; touch "$FILE"
-
 DIR=$(dirname "$FILE")
-BUF="$DIR/.$$.novi_buffer.tmp"
-INS="$DIR/.$$.novi_insert.tmp"
-CLIP="$DIR/.$$.novi_clip.tmp"
-cat "$FILE" > "$BUF"
-touch "$CLIP"
-
-restore_term() {
-    stty icanon echo
-    printf "\033[?25h\033[2J\033[H"
-    rm -f "$BUF" "$INS" "$CLIP" "$BUF.tmp"
-}
+BUF="$DIR/.$$.b"; INS="$DIR/.$$.i"; CLIP="$DIR/.$$.c"
+cat "$FILE" > "$BUF"; touch "$CLIP"
+restore_term(){ stty icanon echo; printf "\033[?25h\033[2J\033[H"; rm -f "$BUF" "$INS" "$CLIP" "$BUF.tmp"; }
 trap restore_term EXIT INT TERM
-
+rk(){ stty -icanon -echo; head -c 1 2>/dev/null; stty icanon echo; }
 CUR=1; WIN=20; TOP=1; HELP=0; MSG=""; KBUF=""
 printf "\033[2J"
-
 while :; do
-    TOT=$(awk 'END{print NR+0}' "$BUF")
-    [ "$CUR" -gt "$TOT" ] && CUR="$TOT"
-    [ "$CUR" -lt 1 ] && CUR=1
-    [ "$CUR" -ge $((TOP + WIN)) ] && TOP=$((CUR - WIN + 1))
-    [ "$CUR" -lt "$TOP" ] && TOP="$CUR"
-    BOT=$((TOP + WIN - 1)); [ "$BOT" -gt "$TOT" ] && BOT="$TOT"
-
-    # --- DRAW PHASE ---
-    printf "\033[?25l\033[H"
-
-    if [ "$TOT" -gt 0 ]; then
-        awk -v s="$TOP" -v e="$BOT" -v c="$CUR" '
-        NR>=s && NR<=e {
-            printf "\033[K%s%d: %s\n", (NR == c ? "> " : "  "), NR, $0;
-        }' "$BUF"
-        LC=$((BOT - TOP + 1))
-    else
-        printf "\033[K  (file is empty)\n"
-        LC=1
-    fi
-
-    pad=$((WIN - LC))
-    while [ "$pad" -gt 0 ]; do
-        printf "\033[K\n"
-        pad=$((pad - 1))
-    done
-
-    if [ -n "$MSG" ]; then
-        printf "\033[K%s\n" "$MSG"; MSG=""
-    elif [ "$HELP" -eq 1 ]; then
-        printf "\033[K[Help: j/k=Move f/b=Page o=Open Below O=Open Above /=Search dd=Del :x :w :q]\n"
-    else
-        printf "\033[KFile: %s | Line: %d/%d (h for help)\n" "$FILE" "$CUR" "$TOT"
-    fi
-
-    printf "\033[K:%s\033[?25h" "$KBUF"
-
-    # --- INPUT PHASE ---
-    CNT=""
-    CMD=""
-    while :; do
-        stty -icanon -echo
-        C=$(head -c 1 2>/dev/null)
-        stty icanon echo
-        
-        if [ -z "$C" ]; then
-            CMD="ENTER"
-            break
-        fi
-
-        case "$C" in
-            [0-9]) 
-                CNT="${CNT}${C}"
-                KBUF="${KBUF}${C}" 
-                printf "\r\033[K:%s" "$KBUF" 
-                ;;
-            *)     
-                CMD="$C"
-                KBUF="${KBUF}${C}" 
-                break 
-                ;;
-        esac
-    done
-
-    NV="$CNT"; [ -z "$CNT" ] && CNT=1
-
-    case "$CMD" in
-        ENTER)
-            if [ -n "$NV" ]; then CUR="$NV"; fi
-            ;;
-        :)
-            printf "\r\033[K:"
-            stty icanon echo
-            read COLON_CMD
-            stty -icanon -echo
-            
-            case "$COLON_CMD" in
-                w) cat "$BUF" > "$FILE"; MSG="\"$FILE\" written to disk." ;;
-                x) cat "$BUF" > "$FILE"; break 2 ;;
-                q)
-                    orig_hash=$(od -An -t x1 "$FILE" | tr -d ' \n\r')
-                    curr_hash=$(od -An -t x1 "$BUF" | tr -d ' \n\r')
-                    if [ "$orig_hash" = "$curr_hash" ]; then break 2; else MSG="No write since last change (add ! to override)"; fi
-                    ;;
-                q!) break 2 ;;
-                wq) cat "$BUF" > "$FILE"; break 2 ;;
-                *) MSG="Not an editor command: :$COLON_CMD" ;;
-            esac
-            ;;
-        /)
-            printf "\r\033[K/"
-            stty icanon echo
-            read SEARCH_STR
-            stty -icanon -echo
-            
-            if [ -n "$SEARCH_STR" ]; then
-                MATCH_LINE=$(awk -v cur="$CUR" -v pat="$SEARCH_STR" 'NR>cur && $0 ~ pat {print NR; exit}' "$BUF")
-                if [ -z "$MATCH_LINE" ]; then
-                    MATCH_LINE=$(awk -v pat="$SEARCH_STR" '$0 ~ pat {print "WRAP_" NR; exit}' "$BUF")
-                fi
-                
-                case "$MATCH_LINE" in
-                    WRAP_*)
-                        MATCH_NUM=$(echo "$MATCH_LINE" | cut -d'_' -f2)
-                        CUR="$MATCH_NUM"
-                        MSG="Search wrapped around to line $CUR"
-                        ;;
-                    "")
-                        MSG="Pattern not found: $SEARCH_STR"
-                        ;;
-                    *)
-                        CUR="$MATCH_LINE"
-                        ;;
-                esac
-            fi
-            ;;
-        o)
-            # Safe POSIX Insert Below
-            printf "\033[2J\033[H-- INSERT MODE (o) --\n(Type block, press Enter then Ctrl+D to finish)\n"
-            cat > "$INS"
-            if [ "$TOT" -eq 0 ]; then
-                cat "$INS" > "$BUF"
-                CUR=1
-            else
-                sed -i "${CUR}r $INS" "$BUF"
-                NEW_LINES=$(awk 'END{print NR}' "$INS")
-                [ -z "$NEW_LINES" ] && NEW_LINES=0
-                CUR=$((CUR + (NEW_LINES > 0 ? 1 : 0)))
-            fi
-            rm -f "$INS"; printf "\033[2J"
-            ;;
-        O)
-            # Safe POSIX Insert Above
-            printf "\033[2J\033[H-- INSERT MODE (O) --\n(Type block, press Enter then Ctrl+D to finish)\n"
-            cat > "$INS"
-            if [ "$TOT" -eq 0 ]; then
-                cat "$INS" > "$BUF"
-                CUR=1
-            else
-                if [ "$CUR" -le 1 ]; then
-                    cat "$INS" "$BUF" > "$BUF.tmp" && mv "$BUF.tmp" "$BUF"
-                    CUR=1
-                else
-                    sed -i "$((CUR - 1))r $INS" "$BUF"
-                fi
-            fi
-            rm -f "$INS"; printf "\033[2J"
-            ;;
-        h) HELP=$((1 - HELP)) ;;
-        j) CUR=$((CUR + CNT)) ;;
-        k) CUR=$((CUR - CNT)) ;;
-        f) CUR=$((CUR + WIN * CNT)) ;;
-        b) CUR=$((CUR - WIN * CNT)) ;;
-        g)
-            stty -icanon -echo; NX=$(head -c 1 2>/dev/null); stty icanon echo
-            [ "$NX" = "g" ] && CUR="${NV:-1}"
-            ;;
-        G) CUR="${NV:-$TOT}" ;;
-        y)
-            if [ "$TOT" -gt 0 ]; then
-                END_YANK=$((CUR + CNT - 1))
-                awk -v s="$CUR" -v e="$END_YANK" 'NR>=s && NR<=e' "$BUF" > "$CLIP"
-                MSG="Yanked $CNT line(s) to clipboard."
-            fi
-            ;;
-        p)
-            if [ -s "$CLIP" ]; then
-                sed -i "${CUR}r $CLIP" "$BUF"
-                MSG="Pasted block below line $CUR."
-            fi
-            ;;
-        d)
-            stty -icanon -echo; NX=$(head -c 1 2>/dev/null); stty icanon echo
-            if [ "$NX" = "d" ] && [ "$TOT" -gt 0 ]; then
-                END_DEL=$((CUR + CNT - 1))
-                awk -v s="$CUR" -v e="$END_DEL" 'NR>=s && NR<=e' "$BUF" > "$CLIP"
-                sed -i "${CUR},${END_DEL}d" "$BUF"
-            fi
-            ;;
+  TOT=$(awk 'END{print NR+0}' "$BUF")
+  [ "$CUR" -gt "$TOT" ] && CUR="$TOT"
+  [ "$CUR" -lt 1 ] && CUR=1
+  [ "$CUR" -ge $((TOP + WIN)) ] && TOP=$((CUR - WIN + 1))
+  [ "$CUR" -lt "$TOP" ] && TOP="$CUR"
+  BOT=$((TOP + WIN - 1)); [ "$BOT" -gt "$TOT" ] && BOT="$TOT"
+  printf "\033[?25l\033[H"
+  if [ "$TOT" -gt 0 ]; then
+    awk -v s="$TOP" -v e="$BOT" -v c="$CUR" 'NR>=s && NR<=e {printf "\033[K%s%d: %s\n", (NR==c ? "> " : "  "), NR, $0}' "$BUF"
+    LC=$((BOT - TOP + 1))
+  else
+    printf "\033[K  (file is empty)\n"; LC=1
+  fi
+  pad=$((WIN - LC))
+  while [ "$pad" -gt 0 ]; do printf "\033[K\n"; pad=$((pad - 1)); done
+  if [ -n "$MSG" ]; then printf "\033[K%s\n" "$MSG"; MSG=""
+  elif [ "$HELP" -eq 1 ]; then printf "\033[K[Help: j/k=Move f/b=Page o=Open Below O=Open Above /=Search dd=Del :x :w :q]\n"
+  else printf "\033[KFile: %s | Line: %d/%d (h for help)\n" "$FILE" "$CUR" "$TOT"
+  fi
+  printf "\033[K:%s\033[?25h" "$KBUF"
+  CNT=""; CMD=""
+  while :; do
+    C=$(rk)
+    [ -z "$C" ] && { CMD="ENTER"; break; }
+    case "$C" in
+      [0-9]) CNT="${CNT}${C}"; KBUF="${KBUF}${C}"; printf "\r\033[K:%s" "$KBUF" ;;
+      *) CMD="$C"; KBUF="${KBUF}${C}"; break ;;
     esac
-
-    KBUF=""
+  done
+  NV="$CNT"; [ -z "$CNT" ] && CNT=1
+  case "$CMD" in
+    ENTER) [ -n "$NV" ] && CUR="$NV" ;;
+    :)
+      printf "\r\033[K:"; read COLON_CMD
+      case "$COLON_CMD" in
+        w) cat "$BUF" > "$FILE"; MSG="\"$FILE\" written to disk." ;;
+        x|wq) cat "$BUF" > "$FILE"; break 2 ;;
+        q) if cmp -s "$FILE" "$BUF"; then break 2; else MSG="No write since last change (add ! to override)"; fi ;;
+        q!) break 2 ;;
+        *) MSG="Not an editor command: :$COLON_CMD" ;;
+      esac
+      ;;
+    /)
+      printf "\r\033[K/"; read S
+      if [ -n "$S" ]; then
+        M=$(awk -v c="$CUR" -v p="$S" 'NR>c && $0~p {print NR; exit}' "$BUF")
+        if [ -n "$M" ]; then CUR="$M"
+        else
+          M=$(awk -v p="$S" '$0~p {print NR; exit}' "$BUF")
+          if [ -n "$M" ]; then CUR="$M"; MSG="Search wrapped around to line $CUR"; else MSG="Pattern not found: $S"; fi
+        fi
+      fi
+      ;;
+    o)
+      printf "\033[2J\033[H-- INSERT MODE (o) --\n(Type block, press Enter then Ctrl+D to finish)\n"
+      cat > "$INS"
+      if [ "$TOT" -eq 0 ]; then cat "$INS" > "$BUF"; CUR=1
+      else sed -i "${CUR}r $INS" "$BUF"; [ -s "$INS" ] && CUR=$((CUR + 1))
+      fi
+      rm -f "$INS"; printf "\033[2J"
+      ;;
+    O)
+      printf "\033[2J\033[H-- INSERT MODE (O) --\n(Type block, press Enter then Ctrl+D to finish)\n"
+      cat > "$INS"
+      if [ "$CUR" -le 1 ]; then cat "$INS" "$BUF" > "$BUF.tmp" && mv "$BUF.tmp" "$BUF"; CUR=1
+      else sed -i "$((CUR - 1))r $INS" "$BUF"
+      fi
+      rm -f "$INS"; printf "\033[2J"
+      ;;
+    h) HELP=$((1 - HELP)) ;;
+    j) CUR=$((CUR + CNT)) ;;
+    k) CUR=$((CUR - CNT)) ;;
+    f) CUR=$((CUR + WIN * CNT)) ;;
+    b) CUR=$((CUR - WIN * CNT)) ;;
+    g) [ "$(rk)" = "g" ] && CUR="${NV:-1}" ;;
+    G) CUR="${NV:-$TOT}" ;;
+    y)
+      if [ "$TOT" -gt 0 ]; then
+        awk -v s="$CUR" -v e="$((CUR + CNT - 1))" 'NR>=s && NR<=e' "$BUF" > "$CLIP"
+        MSG="Yanked $CNT line(s) to clipboard."
+      fi
+      ;;
+    p) [ -s "$CLIP" ] && { sed -i "${CUR}r $CLIP" "$BUF"; MSG="Pasted block below line $CUR."; } ;;
+    d)
+      if [ "$(rk)" = "d" ] && [ "$TOT" -gt 0 ]; then
+        E=$((CUR + CNT - 1))
+        awk -v s="$CUR" -v e="$E" 'NR>=s && NR<=e' "$BUF" > "$CLIP"
+        sed -i "${CUR},${E}d" "$BUF"
+      fi
+      ;;
+  esac
+  KBUF=""
 done
-
