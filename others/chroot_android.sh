@@ -69,6 +69,7 @@ startchroot(){
 #su -c "device_config put activity_manager max_phantom_processes 2147483647"
 
 #env -i HOME=/root TERM=$TERM chroot $UBUNTUPATH /bin/bash --login #only when you need to install new packages as root
+#env -i HOME=/root TERM=$TERM proot -r $UBUNTUPATH -0 /bin/bash --login #or you can proot if you need to install new packages as root
 env -i HOME=/home/k TERM=$TERM chroot $UBUNTUPATH /bin/su - k #safe to use because it cant escape chroot
 }
 
