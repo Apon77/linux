@@ -1,0 +1,10 @@
+#!/bin/bash
+read -p 'Download?(y/n)(default n): ' download
+port=$1
+
+download=${download:-"n"}
+port=${port:-"6080"}
+
+[[ $download == "y" ]] && curl -sSL https://github.com/novnc/noVNC/archive/refs/tags/v1.7.0.tar.gz | tar -xz
+
+./noVNC-1.7.0/utils/novnc_proxy --vnc localhost:5900 --listen $port
